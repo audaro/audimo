@@ -1,8 +1,9 @@
 # Audimo
 
-A native music + audiobook player for macOS, with a Stremio-style addon
-system. Audimo core is a player; sources of audio come from
-addons you install.
+A native music + audiobook + podcast player for macOS, with a
+Stremio-style addon system. Audimo core is a player; sources of audio
+come from addons you install (with the exception of podcasts, which
+ship built-in via standard RSS).
 
 Self-hosted, single-user, multi-device. Think *Plex for music* with
 plugins.
@@ -23,8 +24,11 @@ library + playlists + cross-device sync running on your own hardware.
 
 ## What it does
 
-- **Plays music and audiobooks.** Library, queue, playlists, crossfade,
-  shuffle, scrubber, mobile Now Playing.
+- **Plays music, audiobooks, and podcasts.** Library, queue, playlists,
+  crossfade, shuffle, scrubber, mobile Now Playing.
+- **Subscribes to podcasts** via any RSS feed URL (no addon needed —
+  RSS is the one source format core handles natively). Episode list,
+  per-episode download, listen-progress tracking.
 - **Searches across multiple sources at once.** Songs, artists,
   audiobooks. A unified picker ranks results by quality, instant-cache
   availability, and your preferences.
