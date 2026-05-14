@@ -1,0 +1,170 @@
+name: release
+
+# Builds Audimo.app, packages it as a DMG, and publishes a GitHub
+# Release. macOS arm64 only for now — Intel + Linux + Windows are
+# achievable but each needs its own libtorrent toolchain story
+# (see streaming_server/audimo_streaming.spec for the build-time
+# PYTHONPATH dance) and aren't wired here yet.
+#
+# Trigger:
+#   - Push a tag of the form `v0.4.0`
+#   - Or run manually via Actions → release → Run workflow
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (without leading v)'
+        required: true
+        default: '0.4.0'
+
+permissions:
+  contents: write
+
+jobs:
+  macos-arm64:
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: meta
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            REF="${GITHUB_REF#refs/tags/}"
+            VERSION="${REF#v}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "→ building Audimo $VERSION"
+
+      # ── Toolchains ──────────────────────────────────────────────
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: frontend/src-tauri
+
+      # ── System deps ─────────────────────────────────────────────
+      # libtorrent-rasterbar ships a Python binding that the streaming
+      # sidecar imports. PyInstaller picks it up via collect_all('libtorrent')
+      # in audimo_streaming.spec — but only if it's on PYTHONPATH at
+      # build time. Homebrew puts it under
+      # /opt/homebrew/Cellar/libtorrent-rasterbar/<ver>/lib/python<py>/site-packages.
+      - name: Install libtorrent
+        run: brew install libtorrent-rasterbar
+
+      # ── Backend sidecar binary ──────────────────────────────────
+      - name: Build backend sidecar (PyInstaller)
+        working-directory: backend
+        run: |
+          set -euo pipefail
+          python3 -m venv .venv
+          ./.venv/bin/pip install --upgrade pip
+          ./.venv/bin/pip install -r requirements.txt pyinstaller
+          ./.venv/bin/pyinstaller audimo_backend.spec --clean --noconfirm
+          ls -lh dist/
+
+      # ── Streaming sidecar binary ────────────────────────────────
+      - name: Build streaming sidecar (PyInstaller + libtorrent)
+        working-directory: streaming_server
+        run: |
+          set -euo pipefail
+          python3 -m venv .venv
+          ./.venv/bin/pip install --upgrade pip
+          ./.venv/bin/pip install -r requirements.txt pyinstaller
+          # Point PyInstaller at Homebrew's libtorrent bindings. The
+          # exact python subdir varies — pick the newest one available.
+          LT_PY_DIR=$(ls -d /opt/homebrew/Cellar/libtorrent-rasterbar/*/lib/python*/site-packages 2>/dev/null | tail -1)
+          if [ -z "$LT_PY_DIR" ]; then
+            echo "::error::Could not find libtorrent bindings under /opt/homebrew/Cellar/libtorrent-rasterbar"
+            exit 1
+          fi
+          echo "→ PYTHONPATH=$LT_PY_DIR"
+          export PYTHONPATH="$LT_PY_DIR"
+          ./.venv/bin/pyinstaller audimo_streaming.spec --clean --noconfirm
+          ls -lh dist/
+
+      # ── Stage sidecars where Tauri expects them ─────────────────
+      - name: Stage sidecar binaries
+        run: |
+          set -euo pipefail
+          mkdir -p frontend/src-tauri/binaries
+          cp backend/dist/audimo-backend          frontend/src-tauri/binaries/audimo-backend-aarch64-apple-darwin
+          cp streaming_server/dist/audimo-streaming frontend/src-tauri/binaries/audimo-streaming-aarch64-apple-darwin
+          chmod +x frontend/src-tauri/binaries/*
+          ls -lh frontend/src-tauri/binaries/
+
+      # ── Tauri build ─────────────────────────────────────────────
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build Tauri app (produces .app + .dmg)
+        working-directory: frontend
+        run: npx tauri build
+
+      # ── Package + upload ────────────────────────────────────────
+      - name: Rename + checksum DMG
+        id: artifact
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.meta.outputs.version }}"
+          SRC=$(ls frontend/src-tauri/target/release/bundle/dmg/Audimo_*_aarch64.dmg | head -1)
+          OUT="Audimo_${VERSION}_aarch64.dmg"
+          cp "$SRC" "$OUT"
+          shasum -a 256 "$OUT" | tee "$OUT.sha256"
+          echo "dmg=$OUT" >> "$GITHUB_OUTPUT"
+          echo "sha=$OUT.sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.meta.outputs.version }}
+          name: "Audimo ${{ steps.meta.outputs.version }}"
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          # Tauri builds are unsigned today (no Apple Developer account
+          # wired up). Users get the "cannot verify developer" warning
+          # on first launch — right-click → Open bypasses it once.
+          body: |
+            ## Install
+
+            1. Download `Audimo_${{ steps.meta.outputs.version }}_aarch64.dmg` below.
+            2. Open the DMG, drag **Audimo** into `/Applications`.
+            3. First launch: macOS will say "cannot verify the developer".
+               **Right-click → Open** (instead of double-click) to bypass — you only need to do this once.
+
+            ## Requirements
+
+            - macOS 12+ on Apple Silicon
+            - `ffmpeg` (`brew install ffmpeg`) — the app warns on first launch if it's missing
+
+            ## Verify
+
+            ```sh
+            shasum -a 256 Audimo_${{ steps.meta.outputs.version }}_aarch64.dmg
+            ```
+
+            The expected checksum is in `Audimo_${{ steps.meta.outputs.version }}_aarch64.dmg.sha256` above.
+          files: |
+            ${{ steps.artifact.outputs.dmg }}
+            ${{ steps.artifact.outputs.sha }}
