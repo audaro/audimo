@@ -1,0 +1,150 @@
+.wrap {
+  padding: 24px 36px 48px;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  /* The parent .main is overflow:hidden, so ArtistDetailView has to
+     scroll itself. Without this the artist page sits frozen at
+     whatever fits the viewport (Post Malone's track list, the
+     discography grid, etc. were all clipped). */
+  height: 100%;
+  overflow-y: auto;
+}
+
+.back {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg-soft);
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+.back:hover { color: var(--fg); border-color: var(--fg); }
+
+.hero {
+  display: flex;
+  gap: 32px;
+  align-items: flex-end;
+  margin-top: 24px;
+  margin-bottom: 36px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+.heroAvatar {
+  width: 200px; height: 200px;
+  flex-shrink: 0;
+  background: var(--bg-card);
+  display: flex;
+  align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.heroAvatar img { width: 100%; height: 100%; object-fit: cover; }
+.heroInfo { flex: 1; min-width: 0; }
+.heroLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--fg-soft);
+  letter-spacing: 0.05em;
+}
+.heroName {
+  font-size: 56px;
+  font-weight: 700;
+  margin: 4px 0 12px;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.heroMeta { font-size: 13px; color: var(--fg-soft); }
+
+.section { margin-bottom: 40px; }
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fg);
+  margin: 0 0 16px;
+}
+
+.trackList { display: flex; flex-direction: column; }
+.track {
+  display: grid;
+  grid-template-columns: 32px 48px 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--line);
+}
+.track:hover { background: var(--bg-hover); }
+.trackIndex { color: var(--fg-soft); font-size: 12px; text-align: center; }
+.trackCover {
+  width: 48px; height: 48px;
+  background: var(--bg-card);
+  overflow: hidden;
+}
+.trackCover img { width: 100%; height: 100%; object-fit: cover; }
+.trackInfo { min-width: 0; }
+.trackTitle {
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.trackAlbum {
+  font-size: 12px;
+  color: var(--fg-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.trackDuration { color: var(--fg-soft); font-size: 12px; font-variant-numeric: tabular-nums; }
+.queueBtn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg-soft);
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+.queueBtn:hover { color: var(--fg); border-color: var(--fg); }
+
+.albumGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 18px;
+}
+.albumCard { cursor: default; }
+.albumCover {
+  aspect-ratio: 1 / 1;
+  background: var(--bg-card);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.albumCover img { width: 100%; height: 100%; object-fit: cover; }
+.albumTitle {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.albumMeta {
+  font-size: 11px;
+  color: var(--fg-soft);
+  margin-top: 2px;
+}
+
+.empty {
+  color: var(--fg-soft);
+  font-size: 13px;
+  padding: 24px 0;
+}
+
+@media (max-width: 640px) {
+  .wrap { padding: 18px 16px 96px; }
+  .hero { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .heroAvatar { width: 120px; height: 120px; }
+  .heroName { font-size: 28px; }
+}

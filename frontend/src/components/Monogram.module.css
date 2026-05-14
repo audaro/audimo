@@ -1,0 +1,55 @@
+/* Audimo-wide cover fallback — monogrammed accent-tan tile.
+   Replaces emoji glyphs (music-note, disc, book, cloud) so the
+   brutalist look holds when art is missing or still loading. */
+
+.mono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-raised);
+  color: var(--gold);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  user-select: none;
+  /* Default to filling whatever container puts us in — most cover
+     fallbacks are inside fixed-size boxes already. Sized variants
+     below override when used standalone. */
+  width: 100%;
+  height: 100%;
+}
+
+.letters {
+  line-height: 1;
+}
+
+.circle {
+  border-radius: 999px;
+}
+
+/* Standalone size variants. .mono inside an explicitly-sized parent
+   inherits via width/height: 100%; these only take effect when the
+   component renders without an outer wrapper sizing it. */
+.size_sm {
+  width: 32px; height: 32px;
+  font-size: 12px;
+}
+.size_md {
+  width: 48px; height: 48px;
+  font-size: 14px;
+}
+.size_lg {
+  width: 96px; height: 96px;
+  font-size: 26px;
+}
+
+/* When mono fills its parent, font-size is the only thing we can't
+   inherit. Scale via container queries where available; for the rest,
+   set on parent with class overrides. */
+.mono.size_md.fill,
+.mono.size_lg.fill {
+  font-size: inherit;
+}

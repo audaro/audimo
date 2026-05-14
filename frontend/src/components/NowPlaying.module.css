@@ -1,0 +1,803 @@
+/* Full-bleed mobile Now Playing. Hidden on desktop — the bottom
+   Player bar already exposes everything. */
+.root {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .root {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    display: flex;
+    flex-direction: column;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    animation: tn-np-up 200ms ease;
+    transition: transform 200ms ease;
+    /* Disable browser pull-to-refresh / overscroll inside the sheet
+       so the swipe-down gesture stays exclusively ours. */
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+  @keyframes tn-np-up {
+    from { transform: translateY(20%); opacity: 0; }
+    to   { transform: translateY(0);   opacity: 1; }
+  }
+
+  /* Grabber pill above the topBar — visual signal for the
+     swipe-down-to-dismiss gesture, matching every other native
+     iOS sheet. The element also catches the touch so users can
+     pull from the very top of the sheet to close. */
+  .grabber {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--line);
+    margin: 6px auto 4px;
+    flex-shrink: 0;
+    /* Generous hit area for touch without inflating the visual
+       grabber — extra room above/below is hit-only. */
+    position: relative;
+  }
+  .grabber::before {
+    content: '';
+    position: absolute;
+    inset: -10px -40px;
+  }
+
+  .topBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px 6px;
+    flex-shrink: 0;
+  }
+  .collapseBtn {
+    background: transparent;
+    border: none;
+    color: var(--fg-soft);
+    line-height: 1;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: color 80ms linear, background 80ms linear;
+  }
+  .collapseBtn:hover { color: var(--gold); }
+  .collapseBtn:active { background: var(--bg-raised); }
+  .playingFrom {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-mute);
+  }
+
+  .artWrap {
+    padding: 16px 36px;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .art {
+    width: 100%;
+    max-width: 320px;
+    max-height: 320px;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+    background: var(--bg-card);
+  }
+  .artFallback {
+    width: 100%;
+    max-width: 320px;
+    max-height: 320px;
+    aspect-ratio: 1 / 1;
+    background: repeating-linear-gradient(
+      45deg,
+      var(--bg-card),
+      var(--bg-card) 6px,
+      var(--bg-raised) 6px,
+      var(--bg-raised) 12px
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    color: var(--fg-mute);
+  }
+
+  .meta {
+    padding: 8px 28px 4px;
+    flex-shrink: 0;
+    text-align: center;
+  }
+  .title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    margin: 0 0 6px;
+    color: var(--fg);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .artist {
+    font-size: 14px;
+    color: var(--fg-soft);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Scrubber — visible 12px draggable thumb on the playhead so
+     users can see + grab it on touch. Track is 4px wide (was
+     1-2px hairline) for visual weight. */
+  .scrubber {
+    padding: 18px 28px 6px;
+    flex-shrink: 0;
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+  }
+  .scrubberTrack {
+    height: 4px;
+    background: var(--line);
+    overflow: visible;
+    position: relative;
+    border-radius: 2px;
+    transition: height 80ms linear;
+  }
+  .scrubberFill {
+    height: 100%;
+    background: var(--gold);
+    border-radius: 2px;
+    transition: width 0.15s linear;
+  }
+  .scrubberThumb {
+    position: absolute;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    background: var(--fg);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: transform 80ms linear;
+  }
+  .scrubberActive .scrubberTrack { height: 6px; }
+  .scrubberActive .scrubberFill { transition: none; }
+  .scrubberActive .scrubberThumb {
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  .scrubberTimes {
+    margin-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--fg-soft);
+  }
+
+  /* Controls — proper icon buttons. Prev/next are 48px circular
+     hit targets with 24px icons; play is a 64px filled circle
+     with 28px icon. Skip variants for long-form (audiobook /
+     podcast) replace prev/next with -15/+30 text buttons. */
+  .controls {
+    padding: 14px 28px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    flex-shrink: 0;
+  }
+  .ctrlBtn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: var(--fg);
+    font-family: var(--font-sans);
+    cursor: pointer;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 80ms linear, background 80ms linear;
+  }
+  .ctrlBtn:hover:not(:disabled) { background: var(--bg-raised); }
+  .ctrlBtn:active:not(:disabled) { background: var(--bg-hover); }
+  .ctrlBtn:disabled { opacity: 0.35; cursor: default; }
+
+  .skipBtn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--fg);
+    width: 56px;
+    height: 48px;
+    border-radius: 24px;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: border-color 80ms linear, color 80ms linear;
+  }
+  .skipBtn:hover:not(:disabled) { border-color: var(--fg); }
+  .skipBtn:disabled { opacity: 0.35; cursor: default; }
+  .skipLabel {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .playBtn {
+    background: var(--fg);
+    border: none;
+    color: var(--bg);
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: transform 80ms linear, opacity 80ms linear;
+  }
+  .playBtn:active:not(:disabled) { transform: scale(0.96); }
+  .playBtn:disabled { opacity: 0.35; cursor: default; }
+
+  /* Queue access — secondary affordance below the controls. Pill
+     row with icon + label + position counter on the right. */
+  .queueBtn {
+    background: transparent;
+    border: 0;
+    border-top: 1px solid var(--line-soft);
+    color: var(--fg-soft);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    cursor: pointer;
+    flex-shrink: 0;
+    min-height: 50px;
+    transition: color 80ms linear, background 80ms linear;
+  }
+  .queueBtn:hover { color: var(--fg); }
+  .queueBtn:active { background: var(--bg-raised); }
+  .queuePosTxt {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg-mute);
+  }
+
+  /* Queue + overflow-menu sheet contents. The chrome is provided
+     by MobileSheet; these classes are the inner lists. */
+  .queueList,
+  .menuList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .queueRow {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    background: transparent;
+    border: 0;
+    border-top: 1px solid var(--line-soft);
+    padding: 12px 22px;
+    color: var(--fg);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 80ms linear;
+  }
+  .queueRow:active { background: var(--bg-raised); }
+  .queueRowThumb {
+    width: 44px;
+    height: 44px;
+    background: var(--bg-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .queueRowThumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .queueRowMeta { min-width: 0; }
+  .queueRowTitle {
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .queueRowSub {
+    font-size: 12px;
+    color: var(--fg-soft);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .queueEmpty {
+    padding: 22px;
+    color: var(--fg-soft);
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .menuRow {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 14px;
+    align-items: center;
+    width: 100%;
+    background: transparent;
+    border: 0;
+    border-top: 1px solid var(--line-soft);
+    padding: 16px 22px;
+    min-height: 56px;
+    color: var(--fg);
+    font: inherit;
+    font-size: 15px;
+    text-align: left;
+    cursor: pointer;
+    transition: background 80ms linear;
+  }
+  .menuRow:active { background: var(--bg-raised); }
+
+  /* Empty-state line for playlist picker when the user has none. */
+  .menuEmpty {
+    padding: 22px;
+    color: var(--fg-soft);
+    font-size: 13px;
+    text-align: center;
+    border-top: 1px solid var(--line-soft);
+  }
+  /* Footer row for the playlist picker — text input + button to
+     create a new playlist and add the current track in one tap. */
+  .menuFooter {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+    padding: 14px 22px 18px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .menuNewInput {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-raised);
+    border: 1px solid var(--line);
+    color: var(--fg);
+    padding: 12px 14px;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    outline: none;
+    border-radius: 4px;
+  }
+  .menuNewInput:focus { border-color: var(--gold); }
+  .menuNewBtn {
+    background: var(--fg);
+    color: var(--bg);
+    border: none;
+    padding: 0 16px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 4px;
+    min-height: 44px;
+    white-space: nowrap;
+  }
+  .menuNewBtn:disabled { opacity: 0.4; cursor: default; }
+}
+
+/* ─── Desktop 3-column overlay (≥ 900px) ─────────────────────── */
+.dRoot {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  display: flex;
+  flex-direction: column;
+  animation: tn-d-up 200ms ease;
+}
+@keyframes tn-d-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.dHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--line-soft);
+  flex-shrink: 0;
+}
+.dPlayingFrom {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  color: var(--fg-mute);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.dCloseBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 9px 14px;
+  color: var(--fg-soft);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: background 120ms linear, color 120ms linear;
+}
+.dCloseBtn:hover { background: var(--bg-hover); color: var(--fg); }
+.dCloseLabel { letter-spacing: 0; text-transform: none; }
+
+.dCols {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
+  gap: 56px;
+  padding: 36px 56px;
+  overflow: hidden;
+  min-height: 0;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Left column — hero. Caps the art so it stays visually anchored on
+   wide windows instead of growing to fill 1/3 of the screen. */
+.dLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  min-height: 0;
+  align-items: stretch;
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+}
+.dArtWrap {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+}
+.dArt { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dArtFallback {
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(45deg, var(--bg-card), var(--bg-card) 6px, var(--bg-raised) 6px, var(--bg-raised) 12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  color: var(--fg-mute);
+}
+.dMeta {}
+.dKind {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-bottom: 6px;
+}
+.dTitle {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  margin: 0 0 8px;
+  color: var(--fg);
+}
+.dArtist {
+  font-size: 17px;
+  color: var(--fg-soft);
+}
+
+.dScrub {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+.dTime {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+  min-width: 44px;
+  text-align: right;
+}
+.dTime + .dScrubBar + .dTime { text-align: left; }
+.dScrubBar {
+  height: 2px;
+  background: var(--line);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.dScrubFill {
+  height: 100%;
+  background: var(--gold);
+  transition: width 0.15s linear;
+}
+
+.dCtrls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 4px 0;
+}
+.dCtrlBtn {
+  background: transparent;
+  border: 0;
+  color: var(--fg-soft);
+  font-size: 20px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  padding: 0;
+  transition: color 120ms linear;
+}
+.dCtrlBtn:hover:not(:disabled) { color: var(--fg); }
+.dCtrlBtn:disabled { opacity: 0.35; cursor: default; }
+.dPlayBtn {
+  width: 52px;
+  height: 52px;
+  background: var(--gold);
+  border: 1px solid var(--gold);
+  color: oklch(0.18 0.02 70);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+}
+.dPlayBtn:hover:not(:disabled) {
+  background: oklch(0.86 0.115 78);
+  color: oklch(0.18 0.02 70);
+}
+
+.dAudio { padding-top: 6px; }
+.dSectionLabel {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+.dAudioGrid { margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+.dAudioRow { display: contents; }
+.dAudioKey { color: var(--fg-soft); font-size: 12px; }
+.dAudioVal {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Right column — stacked panels (tabs + queue) */
+.dPanel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* Without flex-shrink:0 a tall first panel (long podcast show
+     notes, long chapter list) would squeeze the next panel down
+     to zero, rendering its rows on top of the first one's text. */
+  flex-shrink: 0;
+}
+.dPanel + .dPanel { margin-top: 28px; }
+.dTabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--line-soft);
+  margin-bottom: 18px;
+}
+.dTab {
+  background: transparent;
+  border: 0;
+  padding: 10px 16px;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  color: var(--fg-soft);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 80ms linear, border-color 80ms linear;
+}
+.dTab:hover { color: var(--fg); }
+.dTabActive { color: var(--fg); border-bottom-color: var(--gold); }
+
+.dTabBody {
+  overflow-y: auto;
+  min-height: 0;
+  max-height: 240px;
+}
+
+.dStub {
+  max-width: 520px;
+  padding: 8px 0;
+}
+.dStubTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  letter-spacing: -0.005em;
+  color: var(--fg);
+}
+.dStubBody {
+  font-size: 13.5px;
+  color: var(--fg-soft);
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+.dStubAction {
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 8px 14px;
+  color: var(--fg);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 80ms linear, color 80ms linear;
+}
+.dStubAction:hover { border-color: var(--gold); color: var(--gold); }
+
+/* Right column wrapper — vertical stack of dPanel sections */
+.dRight {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  min-height: 0;
+}
+.dRightHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.dRightAction {
+  background: none;
+  border: 0;
+  color: var(--fg-soft);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 80ms linear;
+}
+.dRightAction:hover { color: var(--fg); }
+.dEmpty {
+  font-size: 13px;
+  color: var(--fg-soft);
+  padding: 8px 0;
+}
+
+.dQueueRow {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 8px 4px;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: background 120ms linear;
+}
+.dQueueRow:hover { background: var(--bg-raised); }
+.dQueueThumb {
+  width: 36px;
+  height: 36px;
+  background-image: repeating-linear-gradient(135deg, oklch(0.20 0.01 70) 0 6px, oklch(0.18 0.01 70) 6px 12px);
+  background-color: oklch(0.18 0.01 70);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.04);
+}
+.dQueueThumb img { width: 100%; height: 100%; object-fit: cover; }
+.dQueueMeta { min-width: 0; }
+.dQueueTitle {
+  font-weight: 500;
+  font-size: 13.5px;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dQueueSub {
+  font-size: 12px;
+  color: var(--fg-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Active row highlight for the audiobook chapter list — reuses
+   dQueueRow + this modifier so the user can see at a glance which
+   chapter the current playhead sits inside. */
+.dRowActive {
+  background: var(--bg-raised);
+  box-shadow: inset 2px 0 0 var(--gold);
+}
+.dRowActive .dQueueTitle { color: var(--gold); }
+
+/* Podcast episode notes — readable paragraph with linkified URLs.
+   No max-height clamp: long show notes scroll inside the right
+   column's overall overflow container. */
+.dPodcastNotes {
+  font-size: 13.5px;
+  color: var(--fg-soft);
+  line-height: 1.65;
+  margin: 0;
+  white-space: pre-wrap;
+  /* Cap height so long notes scroll inside the panel instead of
+     stretching the whole right column. Matches the music layout's
+     tab body. */
+  max-height: 360px;
+  overflow-y: auto;
+}
+.dPodcastNotes a {
+  color: var(--gold);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in oklch, var(--gold) 35%, transparent);
+}
+.dPodcastNotes a:hover { border-bottom-color: var(--gold); }
+
+/* Below 900px the desktop overlay is never rendered (component
+   uses the mobile sheet instead), so we don't need a fallback. */

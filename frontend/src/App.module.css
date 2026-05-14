@@ -1,0 +1,42 @@
+.layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-rows: 1fr var(--player-h);
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.main {
+  grid-column: 2;
+  grid-row: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 640px) {
+  .layout {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+    /* PWA standalone (Add-to-Home-Screen) launches with the status
+       bar drawn directly over the page — reserve safe-area-inset-top
+       so the title row doesn't slide under the notch. The BottomNav
+       is position:fixed (so its blurred bg paints flush through the
+       home-indicator zone); we reserve its height + safe-area-inset
+       as padding-bottom here so the mini-player sitting above it
+       isn't hidden behind. Total reserve: ~66px (nav icons + padding
+       + border) + safe-area-inset-bottom (~34px on iPhone). */
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: calc(54px + env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
+  }
+
+  .main {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+}

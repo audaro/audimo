@@ -1,0 +1,53 @@
+.toast {
+  position: fixed;
+  bottom: calc(var(--player-h) + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  padding: 10px 18px;
+  border-radius: 0;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  /* Above SourcePicker / EditTrack / ConfirmModal overlays (1000-2000)
+     so error toasts surface even with a modal open. Without this the
+     "wrong source" rejection from an addon fires correctly
+     but the toast renders BEHIND the picker — user just sees the
+     progress bar disappear and thinks nothing happened. */
+  z-index: 2100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: fadeUp 0.2s ease;
+  pointer-events: none;
+  white-space: normal;
+  text-align: center;
+  max-width: 90vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.005em;
+}
+
+/* Mobile: float above the BottomNav + mini-player stack and clear
+   the home-indicator safe area on notched iPhones. Without this
+   the toast renders behind the nav and is invisible. The
+   --tab-bar-h variable already includes the home-indicator
+   clearance, so we add safe-area only as a belt-and-braces. */
+@media (max-width: 640px) {
+  .toast {
+    bottom: calc(var(--mini-player-h, 64px) + var(--tab-bar-h, 90px) + 12px + env(safe-area-inset-bottom, 0px));
+  }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Error toast — same dimensions as info, but flagged with a red
+   accent on the left edge so users can immediately tell something
+   failed vs a routine "▶ Track started" notice. Used by call sites
+   passing `{ kind: 'error' }`. */
+.error {
+  border-left: 3px solid #e85d5d;
+  color: #f4d4d4;
+}
+

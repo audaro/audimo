@@ -1,0 +1,243 @@
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(10, 8, 6, 0.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 28px 32px;
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  font-family: var(--font-sans);
+  color: var(--fg);
+  font-size: 13px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 16px;
+}
+.headerTitle {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--fg);
+}
+.closeBtn {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  color: var(--fg-soft);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 80ms linear;
+  font-family: var(--font-sans);
+}
+.closeBtn:hover { color: var(--fg); }
+
+/* Cover row: player preview + upload controls */
+.coverRow {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.playerThumb {
+  width: 100px; height: 100px;
+  border-radius: 0;
+  background: repeating-linear-gradient(45deg, var(--bg-card), var(--bg-card) 6px, var(--bg-raised) 6px, var(--bg-raised) 12px);
+  border: none;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  color: var(--fg-mute);
+}
+.playerThumb:hover .thumbOverlay { opacity: 1; }
+.playerThumbImg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.playerThumbFallback { font-size: 24px; }
+
+.thumbOverlay {
+  position: absolute; inset: 0;
+  background: rgba(10, 8, 6, 0.6);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 80ms linear;
+  color: var(--fg);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 8px;
+  line-height: 1.3;
+}
+
+.fileInput { display: none; }
+
+.coverRight {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  justify-content: center;
+}
+
+.label {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--fg-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.input {
+  width: 100%;
+  padding: 8px 2px;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  background: transparent;
+  color: var(--fg);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-bottom-color 80ms linear;
+}
+.input::placeholder { color: var(--fg-soft); }
+.input:focus { border-bottom-color: var(--line); }
+
+.comboWrap { position: relative; }
+.comboDropdown {
+  position: fixed;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  max-height: 240px;
+  overflow-y: auto;
+  font-family: var(--font-sans);
+}
+.comboItem {
+  padding: 8px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 80ms linear;
+  color: var(--fg);
+}
+.comboItem:hover { background: var(--bg-raised); }
+
+.actions {
+  display: flex;
+  gap: 22px;
+  justify-content: flex-end;
+  margin-top: 8px;
+  align-items: center;
+}
+.cancelBtn {
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  color: var(--fg-soft);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  letter-spacing: -0.005em;
+  transition: color 80ms linear;
+}
+.cancelBtn:hover { background: transparent; color: var(--fg); }
+.saveBtn {
+  padding: 8px 18px;
+  border-radius: 0;
+  border: 1px solid var(--fg);
+  background: transparent;
+  color: var(--fg);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: color 80ms linear, background 80ms linear;
+}
+.saveBtn:hover:not(:disabled) { background: var(--fg); color: var(--bg); opacity: 1; }
+.saveBtn:disabled { opacity: 0.4; cursor: default; }
+
+/* ── Mobile sheet variant ──────────────────────────────────────
+   The same form markup renders inside a MobileSheet on phones.
+   We stack the cover row vertically (full-width thumb, URL input
+   underneath), widen the thumb to make it tappable, and pin the
+   action buttons to the bottom with the save button stretched.
+   The .overlay / .modal classes aren't used on mobile — the
+   MobileSheet primitive provides chrome there. */
+@media (max-width: 640px) {
+  .sheetBody {
+    padding: 4px 22px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .sheetBody .coverRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .sheetBody .playerThumb {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    max-width: 200px;
+    align-self: center;
+  }
+  .sheetBody .coverRight {
+    width: 100%;
+    flex: none;
+  }
+  .sheetBody .input {
+    font-size: 16px; /* prevents iOS Safari zoom-on-focus */
+    padding: 10px 2px;
+  }
+  .sheetBody .actions {
+    flex-direction: column-reverse;
+    gap: 12px;
+    margin-top: 16px;
+    align-items: stretch;
+  }
+  .sheetBody .cancelBtn {
+    padding: 14px;
+    min-height: 44px;
+    font-size: 13px;
+    border: 1px solid var(--line);
+    color: var(--fg-soft);
+  }
+  .sheetBody .saveBtn {
+    padding: 14px;
+    min-height: 44px;
+    font-size: 13px;
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
+  }
+}

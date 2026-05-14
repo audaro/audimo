@@ -1,0 +1,709 @@
+.wrap {
+  padding: 0 0 96px;
+  overflow-y: auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .wrap { padding: 0 0 96px; }
+  .title { font-size: 22px; }
+  .header, .createRow, .empty, .picker { padding-left: 16px; padding-right: 16px; }
+  .playlistGrid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); padding: 0 16px; }
+  /* Collapse the 240px+1fr grid into a single column. The old
+     mobile rule only tweaked gap+padding, leaving the cover
+     pinned at 240px and the meta column smushed below ~150px on
+     a 390px iPhone — what the user saw as "broken layout". */
+  .detailHeader {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 18px 16px 22px;
+    align-items: flex-start;
+  }
+  .detailTitle { font-size: 24px; }
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 32px 36px 24px;
+  flex-shrink: 0;
+  gap: 14px;
+}
+
+/* ── Design v2 page head + actions ── */
+.pageHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 36px 48px 28px;
+  flex-shrink: 0;
+  max-width: 1480px;
+  flex-wrap: wrap;
+}
+.statLine {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.headerActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  padding: 8px 14px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: border-color 80ms linear, color 80ms linear, background 80ms linear;
+}
+.actionBtn:hover { border-color: var(--fg-mute); }
+.actionBtnSmart {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.actionBtnSmart:hover {
+  background: var(--bg-raised);
+}
+.actionGlyph {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* ── Sections (Smart / Manual) ── */
+.section {
+  padding: 0 48px 32px;
+  max-width: 1480px;
+}
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.sectionTag {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-weight: 500;
+}
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  margin: 0;
+  color: var(--fg);
+}
+
+/* ── Smart playlist cards (3-col, horizontal layout) ── */
+.smartGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+.smartCard {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 14px;
+  padding: 16px;
+  background: var(--bg-raised);
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  align-items: flex-start;
+  transition: background 80ms linear;
+}
+.smartCard:hover { background: var(--bg-raised); }
+.smartArt {
+  width: 64px;
+  height: 64px;
+  background: var(--bg-card);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  overflow: hidden;
+}
+.smartLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.smartGlyph {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.smartName {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--fg);
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.smartRules {
+  font-size: 11.5px;
+  color: var(--fg-soft);
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.smartMeta {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--fg-mute);
+  text-transform: uppercase;
+}
+
+.title {
+  font-size: 44px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  color: var(--fg);
+}
+.createBtn {
+  background: transparent;
+  color: var(--fg);
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  letter-spacing: -0.005em;
+  transition: color 80ms linear;
+}
+.createBtn:hover { background: transparent; color: var(--gold); opacity: 1; }
+
+.createRow {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 0 36px 16px;
+  flex-shrink: 0;
+}
+.nameInput {
+  flex: 1;
+  padding: 10px 2px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  color: var(--fg);
+  outline: none;
+}
+.nameInput::placeholder { color: var(--fg-soft); }
+.nameInput:focus { border-bottom-color: var(--line); }
+
+.empty {
+  text-align: center;
+  padding: 80px 36px;
+  color: var(--fg-soft);
+  background: var(--bg);
+}
+.emptyIcon { display: none; }
+.empty p { font-size: 13px; margin: 0; }
+
+/* Playlist grid (flat, hairline border, no shadow) */
+.playlistGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 18px;
+}
+.playlistCard {
+  border-radius: 0;
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 14px;
+  cursor: pointer;
+  transition: border-color 80ms linear, background 80ms linear;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  width: 100%;
+}
+.playlistCard:hover {
+  background: var(--bg-raised);
+  border-color: var(--line);
+  transform: none;
+  box-shadow: none;
+}
+
+.playlistArt {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  border-radius: 0;
+  overflow: hidden;
+  aspect-ratio: 1;
+  margin-bottom: 12px;
+  background: var(--bg-card);
+}
+.artThumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+.artThumbFallback {
+  width: 100%; height: 100%;
+  background: var(--bg-card);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  color: var(--fg-mute);
+}
+.artEmpty {
+  grid-column: 1/-1; grid-row: 1/-1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  opacity: 0.4;
+  color: var(--fg-mute);
+  background: repeating-linear-gradient(45deg, var(--bg-card), var(--bg-card) 6px, var(--bg-raised) 6px, var(--bg-raised) 12px);
+}
+
+.playlistName {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--fg);
+  letter-spacing: -0.005em;
+}
+.playlistCount {
+  font-size: 11px;
+  color: var(--fg-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Detail view (design v2 hero) ── */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 48px 0;
+  font-size: 12px;
+  color: var(--fg-soft);
+}
+.backBtn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  font-size: 14px;
+  padding: 4px 10px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: border-color 80ms linear, color 80ms linear;
+}
+.backBtn:hover { border-color: var(--gold); color: var(--gold); }
+.breadcrumbLabel {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-weight: 500;
+}
+
+.detailHeader {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 30px;
+  align-items: flex-end;
+  padding: 24px 48px 30px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+  max-width: 1480px;
+  box-sizing: border-box;
+}
+.detailArt {
+  width: 240px; height: 240px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--bg-card);
+  flex-shrink: 0;
+  box-shadow: 0 20px 40px oklch(0 0 0 / 0.55), inset 0 0 0 1px oklch(1 0 0 / 0.04);
+}
+.detailMeta { min-width: 0; }
+.detailKind {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--fg-mute);
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+.detailTitle {
+  font-size: 56px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin: 0 0 14px;
+  color: var(--fg);
+  line-height: 1;
+}
+.detailCount {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin: 0 0 16px;
+}
+.detailActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.renameRow {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+
+/* Hero action buttons — match Library's pill/Play-primary pattern */
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  padding: 9px 16px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 80ms linear, color 80ms linear, background 80ms linear;
+}
+.actionBtn:hover:not(:disabled) { border-color: var(--fg-mute); }
+.actionBtn:disabled { opacity: 0.4; cursor: default; }
+.actionBtnPrimary {
+  background: var(--gold);
+  color: var(--bg);
+  border-color: var(--gold);
+  font-weight: 600;
+}
+.actionBtnPrimary:hover:not(:disabled) {
+  background: var(--gold-dim);
+  border-color: var(--gold-dim);
+  color: var(--bg);
+}
+.actionBtnDanger { color: var(--fg-soft); }
+.actionBtnDanger:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
+
+/* Legacy btn classes still used by the rename Save button + create dialog */
+.btn {
+  padding: 8px 14px;
+  border-radius: 0;
+  font-size: 12.5px;
+  font-weight: 400;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg);
+  transition: border-color 80ms linear, color 80ms linear;
+  white-space: nowrap;
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--fg-mute); }
+.primary {
+  background: var(--gold);
+  color: var(--bg);
+  border-color: var(--gold);
+  font-weight: 600;
+}
+.primary:hover { background: var(--gold-dim); border-color: var(--gold-dim); color: var(--bg); }
+
+/* Add tracks picker */
+.picker {
+  border: 1px solid var(--line);
+  border-radius: 0;
+  margin: 0 36px 20px;
+  overflow: hidden;
+  flex-shrink: 0;
+  max-height: 280px;
+  display: flex;
+  flex-direction: column;
+}
+.pickerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--fg-mute);
+  flex-shrink: 0;
+}
+.pickerClose {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: var(--fg-soft);
+  cursor: pointer;
+  transition: color 80ms linear;
+}
+.pickerClose:hover { color: var(--fg); }
+.pickerList { overflow-y: auto; }
+.pickerEmpty {
+  padding: 18px 16px;
+  font-size: 12px;
+  color: var(--fg-soft);
+}
+.pickerRow {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 80ms linear;
+  border-bottom: 1px solid var(--line-soft);
+}
+.pickerRow:last-child { border-bottom: none; }
+.pickerRow:hover { background: var(--bg-raised); }
+.pickerAdded { opacity: 0.55; }
+.pickerCover {
+  width: 36px; height: 36px;
+  border-radius: 0;
+  overflow: hidden;
+  background: var(--bg-card);
+  border: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  color: var(--fg-mute);
+  flex-shrink: 0;
+}
+.pickerInfo { min-width: 0; }
+.pickerTitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--fg);
+}
+.pickerArtist {
+  font-size: 11px;
+  color: var(--fg-soft);
+}
+.pickerCheck {
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: 0.04em;
+}
+
+/* Track list inside detail view */
+.trackList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.trackRow {
+  display: grid;
+  /* col 1: ↑/↓ stack · col 2: position · col 3: cover · col 4:
+     title+artist (flex) · col 5: remove. The reorder column is wider
+     than the old drag handle (28px vs 20px) so two stacked buttons
+     fit comfortably. */
+  grid-template-columns: 28px 30px 36px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 36px;
+  border-radius: 0;
+  border-bottom: 1px solid var(--line-soft);
+  cursor: pointer;
+  transition: background 80ms linear;
+}
+.trackRow:hover { background: var(--bg-raised); }
+/* Reorder column: stacked ↑ ↓ buttons. Replaces the old drag handle —
+   HTML5 DnD was unreliable in Tauri's WKWebView, so reorder is now
+   one-click per slot. Buttons are dim by default and brighten on
+   row hover so the column doesn't shout for attention at rest. */
+.reorderBtns {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  user-select: none;
+}
+.reorderBtn {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  width: 22px;
+  height: 16px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fg-mute);
+  cursor: pointer;
+  transition: color 80ms linear;
+  line-height: 1;
+}
+.trackRow:hover .reorderBtn { color: var(--fg); }
+.reorderBtn:hover { color: var(--gold) !important; }
+.reorderBtn:disabled {
+  color: var(--line);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.trackNum {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--fg-mute);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.trackCover {
+  width: 36px; height: 36px;
+  border-radius: 0;
+  overflow: hidden;
+  background: var(--bg-card);
+  border: none;
+  flex-shrink: 0;
+}
+.trackCoverImg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.trackCoverFallback {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  color: var(--fg-mute);
+}
+.trackInfo { min-width: 0; }
+.trackTitle {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--fg);
+}
+.trackArtist {
+  font-size: 12px;
+  color: var(--fg-soft);
+}
+.removeBtn {
+  background: none;
+  border: none;
+  color: var(--fg-soft);
+  font-size: 11px;
+  opacity: 0;
+  transition: opacity 80ms linear, color 80ms linear;
+  padding: 4px 6px;
+  border-radius: 0;
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+.trackRow:hover .removeBtn { opacity: 1; }
+.removeBtn:hover { color: var(--red); }
+
+/* Filter input for the add-track picker. Sits between the header
+   and the scrolling list — autofocused on open so the user can type
+   to filter immediately rather than scrolling for the song. */
+.pickerSearch {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  background: var(--bg-raised);
+  color: var(--fg);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  letter-spacing: -0.005em;
+  outline: none;
+}
+.pickerSearch:focus {
+  background: var(--bg);
+  border-bottom-color: var(--gold);
+}
+.pickerSearch::placeholder { color: var(--fg-mute); }
+
+/* ── Mobile overrides (kept at end of file so they actually win
+   over the desktop rules above, since selector specificity is
+   identical and source order decides). ─────────────────────── */
+@media (max-width: 640px) {
+  .wrap { padding: 0 0 96px; }
+  .header, .createRow, .empty, .picker, .pageHead, .section {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .pageHead { padding-top: 20px; padding-bottom: 16px; gap: 14px; }
+  .playlistGrid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    padding: 0 16px;
+  }
+
+  /* Detail hero: stack art over meta so the title gets the full
+     viewport width — desktop's 240px-fixed art column was clipping
+     long playlist names like "Lil Peep" past the right edge on
+     phones. */
+  .detailHeader {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    gap: 16px;
+    padding: 18px 16px 22px;
+    align-items: stretch;
+  }
+  .detailArt {
+    width: 100%;
+    max-width: 280px;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    align-self: center;
+  }
+  .detailTitle { font-size: 32px; line-height: 1.05; }
+  .detailActions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .detailActions .actionBtn { flex: 0 1 auto; }
+}

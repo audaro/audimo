@@ -1,0 +1,315 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.loading { color: var(--fg-soft); padding: 32px 36px; }
+
+.header {
+  padding: 24px 36px 20px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  margin-bottom: 16px;
+  background: transparent;
+  border: none;
+  color: var(--fg-soft);
+  font-size: 12px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: color 80ms linear;
+}
+.backBtn:hover { color: var(--fg); }
+
+.hero {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+.coverWrap {
+  width: 160px;
+  height: 160px;
+  flex-shrink: 0;
+  background: var(--bg-soft, #1a1a1a);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.cover { width: 100%; height: 100%; object-fit: cover; display: block; }
+.coverFallback { color: var(--fg-soft); }
+
+.heroText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin: 0;
+  line-height: 1.2;
+}
+.author { color: var(--fg-soft); font-size: 13px; }
+.description {
+  margin: 4px 0 0;
+  color: var(--fg-soft);
+  font-size: 12px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.heroActions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.actionBtn {
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg);
+  font-size: 11px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  border-radius: 2px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: border-color 80ms linear, color 80ms linear;
+}
+.actionBtn:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+.actionBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.actionBtnOn { border-color: var(--gold); color: var(--gold); }
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 36px 80px;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 4px;
+}
+.filterInput {
+  flex: 1;
+  padding: 8px 2px;
+  border: none;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  color: var(--fg);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-bottom-color 80ms linear;
+}
+.filterInput:focus { border-bottom-color: var(--gold); }
+.filterCount { color: var(--fg-soft); font-size: 11px; font-family: var(--font-mono, var(--font-sans)); }
+.sortBtn {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg-soft);
+  font-size: 11px;
+  font-family: var(--font-mono, var(--font-sans));
+  cursor: pointer;
+  border-radius: 2px;
+  transition: border-color 80ms linear, color 80ms linear;
+}
+.sortBtn:hover { border-color: var(--gold); color: var(--gold); }
+.epDesc a { color: var(--gold); text-decoration: underline; }
+.epDesc a:hover { opacity: 0.85; }
+
+.episodes {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.episode {
+  display: flex;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  align-items: flex-start;
+}
+.episodePlayed .epTitle,
+.episodePlayed .epMeta,
+.episodePlayed .epDesc { color: var(--fg-mute, var(--fg-soft)); opacity: 0.65; }
+
+.epTitleRow { display: flex; align-items: center; gap: 8px; }
+.playedPip {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--fg-soft);
+  flex-shrink: 0;
+}
+.newPip {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 2px;
+  background: var(--gold);
+  color: #000;
+  font-family: var(--font-mono, var(--font-sans));
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+.progressBar {
+  height: 2px;
+  background: var(--line);
+  margin-top: 8px;
+  position: relative;
+  overflow: hidden;
+}
+.progressFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--gold);
+}
+
+.epAction {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--fg-soft);
+  border-radius: 2px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 80ms linear, border-color 80ms linear;
+}
+.epAction:hover { color: var(--gold); border-color: var(--line); }
+.epActionLocal { color: var(--gold); }
+.dlPct {
+  font-size: 10px;
+  font-family: var(--font-mono, var(--font-sans));
+  font-weight: 600;
+  color: var(--gold);
+}
+.playBtn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 80ms linear, color 80ms linear;
+  padding-left: 2px;
+}
+.playBtn:hover { border-color: var(--gold); color: var(--gold); }
+
+.epMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.epTitle {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+.epMeta { font-size: 11px; color: var(--fg-soft); }
+.epDesc {
+  font-size: 12px;
+  color: var(--fg-soft);
+  line-height: 1.5;
+  margin-top: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.showMoreRow {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0 32px;
+}
+.showMoreBtn {
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  cursor: pointer;
+}
+.showMoreBtn:hover {
+  background: var(--bg);
+  border-color: var(--fg-soft);
+}
+
+/* ── Mobile overrides (kept at end so source order beats the
+   desktop rules above). ─────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Make the entire page scroll as one container. Desktop pins the
+     hero (.header is flex-shrink:0) and only scrolls .body — on a
+     phone that leaves the episode list squeezed into a ~30% tall
+     strip below the cover. Letting the wrap itself scroll so the
+     hero scrolls away with the rest is the standard mobile-podcast
+     pattern (Apple Podcasts, Pocket Casts, Spotify all do this). */
+  .wrap {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .header { padding: 16px 16px 14px; }
+  .body {
+    flex: none;
+    overflow: visible;
+    padding: 14px 16px 96px;
+  }
+
+  /* Stack the cover above title/description on phones so the action
+     row below gets the full viewport width instead of being squeezed
+     into the right-hand column next to a 160px cover (where the
+     buttons were wrapping one-per-line). Cover is also smaller now
+     so the description + buttons fit on-screen without scrolling. */
+  .hero {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  .coverWrap {
+    width: 140px;
+    height: 140px;
+    align-self: flex-start;
+  }
+  .title { font-size: 22px; }
+  .description { -webkit-line-clamp: 2; }
+  .heroActions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}

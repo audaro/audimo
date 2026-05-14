@@ -1,0 +1,195 @@
+/* v2 sidebar — flush against the deeper bg, gold-tick active row,
+   nav grouped by Browse / Tools / Account, with What's new + user
+   row + library counter pinned at the bottom. Mobile hides this
+   entirely; the mobile shell renders its own tab bar. */
+
+.sidebar {
+  background: var(--bg-deep);
+  border-right: 1px solid var(--line-soft);
+  color: var(--fg);
+  display: flex;
+  flex-direction: column;
+  padding: 28px 22px 16px;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+
+/* ── Brand row (wordmark + version) ─────────────────────────── */
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+.wordmark {
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+.version {
+  font-size: 9px;
+  color: var(--fg-dim);
+}
+
+/* ── Nav groups + section labels ────────────────────────────── */
+.section {
+  margin: 22px 0 10px;
+}
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Each link: hairline gold tick on active, opacity-shift hover for
+   the icon, color shift for the label. The tick lives inside the
+   link's own padding (margin-left: -12; padding-left: 12) so it
+   aligns flush with the sidebar's left edge. */
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 8px 8px 12px;
+  margin-left: -12px;
+  border: 0;
+  border-left: 2px solid transparent;
+  background: transparent;
+  color: var(--fg-soft);
+  font-size: 14px;
+  font-weight: 400;
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition: color 120ms linear, border-color 120ms linear;
+}
+.navItem:hover { color: var(--fg); }
+.navItem.active {
+  color: var(--fg);
+  font-weight: 600;
+  border-left-color: var(--gold);
+}
+.navIcon { opacity: 0.7; }
+.navItem.active .navIcon,
+.navItem:hover .navIcon { opacity: 1; }
+
+.navLabel { flex: 1; }
+.navNew {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--gold);
+  font-weight: 500;
+}
+.navBadge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gold);
+  background: rgba(0, 0, 0, 0);
+  padding: 2px 6px;
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  line-height: 1;
+}
+
+/* ── Spacer pushes the bottom-pinned cluster down ───────────── */
+.spacer { flex: 1; min-height: 22px; }
+
+/* ── "What's new" card ──────────────────────────────────────── */
+.whatsNew {
+  position: relative;
+  display: block;
+  width: 100%;
+  border: 1px solid var(--line);
+  background: transparent;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: border-color 120ms linear, background 120ms linear;
+}
+.whatsNewDismiss {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: transparent;
+  border: 0;
+  color: var(--fg-soft);
+  font: inherit;
+  font-size: 12px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms linear, color 120ms linear;
+}
+.whatsNew:hover .whatsNewDismiss { opacity: 1; }
+.whatsNewDismiss:hover { color: var(--fg); }
+.whatsNew:hover {
+  border-color: var(--gold-soft);
+  background: var(--bg-raised);
+}
+.whatsNewActive {
+  border-color: var(--gold);
+}
+.whatsNewLabel {
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.whatsNewBody {
+  font-size: 12.5px;
+  color: var(--fg-soft);
+  line-height: 1.4;
+}
+
+/* ── User row ───────────────────────────────────────────────── */
+.userRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 16px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--fg-soft);
+  font-size: 12px;
+}
+.userEmail {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.logoutBtn {
+  background: transparent;
+  border: 0;
+  color: var(--fg-soft);
+  cursor: pointer;
+  padding: 0 2px;
+  display: inline-flex;
+  align-items: center;
+  transition: color 120ms linear;
+}
+.logoutBtn:hover { color: var(--fg); }
+
+/* ── Library counter (mono number, dim "tracks" label) ──────── */
+.libraryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.libraryVal {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+/* ── Mobile collapses the desktop sidebar ───────────────────── */
+@media (max-width: 640px) {
+  .sidebar { display: none; }
+}

@@ -1,0 +1,483 @@
+/* v2 player bar — three-column layout (track info | transport |
+   right cluster) on desktop, single-row mini-player on mobile.
+   All class names preserved so Player.jsx didn't have to change;
+   the JSX-level tweaks (SVG icons, queue button, source badge style)
+   come in a follow-up pass. */
+
+.player {
+  background: var(--bg-deep);
+  border-top: 1px solid var(--line-soft);
+  display: grid;
+  grid-template-columns: 320px 1fr 320px;
+  align-items: center;
+  padding: 0 28px;
+  gap: 24px;
+  height: var(--player-h);
+  flex-shrink: 0;
+  grid-column: 1 / -1;
+  position: relative;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--fg);
+}
+
+.mobileBar { display: none; }
+
+/* ── Track info (left cluster) ──────────────────────────────── */
+
+.trackInfo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 10px 0;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+.trackInfo:hover .expandBtn { color: var(--fg); }
+
+.expandBtn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  color: var(--fg-mute);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 120ms linear;
+}
+.expandBtn:hover { color: var(--fg); }
+
+.thumb {
+  width: 56px; height: 56px;
+  background-image: repeating-linear-gradient(135deg, oklch(0.20 0.01 70) 0 6px, oklch(0.18 0.01 70) 6px 12px);
+  background-color: oklch(0.18 0.01 70);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  overflow: hidden;
+  color: oklch(0.50 0.05 70);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.04);
+}
+.thumb img,
+.thumb :global(img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.meta { min-width: 0; flex: 1; line-height: 1.3; }
+.title {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--fg);
+}
+.artist {
+  font-size: 12.5px;
+  color: var(--fg-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* "AUDIOBOOK" pill before the title — keeps the v2 mono badge look. */
+.bookChip {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  margin-right: 8px;
+  border: 1px solid oklch(0.55 0.10 78 / 0.7);
+  color: var(--gold);
+  vertical-align: 1px;
+  text-transform: uppercase;
+}
+.bookRemain {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-mute);
+}
+
+/* ── Center transport ───────────────────────────────────────── */
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.btns { display: flex; align-items: center; gap: 22px; }
+
+.ctrlBtn {
+  background: transparent;
+  border: 0;
+  color: var(--fg-soft);
+  font-size: 16px;
+  width: auto;
+  height: 28px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 120ms linear;
+}
+.ctrlBtn:hover:not(:disabled) { color: var(--fg); }
+.ctrlBtn:disabled { opacity: 0.35; cursor: default; }
+
+.playBtn {
+  background: transparent;
+  color: var(--fg) !important;
+  font-size: 18px;
+  font-weight: 600;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+.playBtn:hover:not(:disabled) { color: var(--gold) !important; }
+
+/* Buffering ring — replaces glyph while audio loads. */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: tn-spin 0.7s linear infinite;
+}
+@keyframes tn-spin { to { transform: rotate(360deg); } }
+
+.progressWrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 720px;
+}
+.time {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  width: 38px;
+  text-align: right;
+}
+.time + .progressBar + .time { text-align: left; }
+.progressBar {
+  flex: 1;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.progressTrack {
+  width: 100%;
+  height: 2px;
+  background: var(--line);
+  position: relative;
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  background: var(--gold);
+  transition: width 0.5s linear;
+}
+.progressBar:hover .progressTrack { height: 3px; }
+
+/* ── Right cluster ──────────────────────────────────────────── */
+
+.right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  color: var(--fg-soft);
+}
+
+.repeatGlyph { display: inline-block; font-size: 16px; line-height: 1; }
+.repeatBadge {
+  position: relative;
+  top: -7px;
+  margin-left: -2px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: inherit;
+}
+
+/* Source pill — v2 mono badge, dim by default. */
+.sourceBadge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-soft);
+  border: 1px solid var(--line);
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+
+.volIcon {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--fg-mute);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Volume slider — adopts the v2 .bar look (2px hairline with gold
+   fill). The thumb is a tiny gold square. */
+.volSlider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 88px;
+  height: 4px;
+  background: var(--line);
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+}
+.volSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  background: var(--gold);
+  border: 0;
+}
+.volSlider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  background: var(--gold);
+  border: 0;
+}
+
+.queueCount {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-mute);
+  min-width: 40px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.volReadout {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-mute);
+  min-width: 28px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.active { color: var(--gold) !important; }
+
+.mobileCtrls { display: none; }
+
+/* Crossfade / book-speed / sleep pill — v2 mono badge. */
+.cfBtn {
+  background: transparent;
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-soft);
+  padding: 4px 9px;
+  cursor: pointer;
+  transition: color 120ms linear, border-color 120ms linear;
+  white-space: nowrap;
+}
+.cfBtn:hover { border-color: var(--gold-soft); color: var(--gold); }
+.cfActive { border-color: var(--gold-soft); color: var(--gold); }
+
+/* Sleep-timer popover. */
+.sleepWrap { position: relative; display: inline-flex; }
+.sleepMenu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  z-index: 5;
+  box-shadow: 0 8px 32px oklch(0 0 0 / 0.6);
+}
+.sleepMenuItem {
+  background: transparent;
+  border: 0;
+  padding: 10px 14px;
+  text-align: left;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--fg);
+  cursor: pointer;
+  transition: background 120ms linear;
+}
+.sleepMenuItem:hover { background: var(--bg-raised); }
+.sleepMenuClear {
+  border-top: 1px solid var(--line-soft);
+  color: var(--fg-mute);
+}
+.sleepMenuClear:hover { color: var(--gold); }
+
+/* "?" shortcuts trigger. */
+.shortcutHelp {
+  background: transparent;
+  border: 1px solid var(--line);
+  width: 22px;
+  height: 22px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg-mute);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 120ms linear, border-color 120ms linear;
+  flex-shrink: 0;
+}
+.shortcutHelp:hover { border-color: var(--gold-soft); color: var(--gold); }
+
+.shortcuts {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 28px;
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  padding: 16px 18px;
+  box-shadow: 0 8px 32px oklch(0 0 0 / 0.6);
+  z-index: 200;
+  min-width: 240px;
+}
+.shortcutsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.shortcutsTitle {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg);
+  font-weight: 600;
+}
+.shortcutsClose {
+  background: transparent;
+  border: 0;
+  color: var(--fg-mute);
+  font-size: 14px;
+  cursor: pointer;
+}
+.shortcutsClose:hover { color: var(--fg); }
+.shortcutRow { display: flex; align-items: center; gap: 12px; padding: 4px 0; }
+.kbd {
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--fg);
+  min-width: 44px;
+  text-align: center;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.shortcutLabel { font-size: 12.5px; color: var(--fg-soft); }
+
+/* ── Mobile mini-player ────────────────────────────────────────
+   Single-row bar with hairline progress at the top. Sits flush
+   above the tab bar in the mobile shell. */
+@media (max-width: 640px) {
+  .player {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 1fr;
+    padding: 0 14px;
+    gap: 12px;
+    height: var(--mini-player-h);
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .mobileBar {
+    display: block;
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--line);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .mobileBarFill {
+    height: 100%;
+    background: var(--gold);
+    transition: width 0.5s linear;
+  }
+
+  .controls { display: none; }
+  .right { display: none; }
+
+  .mobileCtrls {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-shrink: 0;
+  }
+  .mobileCtrls .ctrlBtn:not(.playBtn) { display: none; }
+  .mobileCtrls .playBtn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 16px;
+  }
+
+  .trackInfo { gap: 10px; padding: 0; }
+  .thumb { width: 40px; height: 40px; }
+  .title {
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .artist { font-size: 11.5px; }
+  .meta { line-height: 1.25; }
+
+  /* Bigger tap target for the "open NowPlaying" affordance — the
+     row also accepts taps anywhere on the trackInfo but a clear
+     icon button helps discoverability. 36×36 fits the row height
+     without inflating it. */
+  .expandBtn {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    color: var(--fg-soft);
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .expandBtn:active {
+    background: var(--bg-raised);
+    color: var(--fg);
+  }
+}

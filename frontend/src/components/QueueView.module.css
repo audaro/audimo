@@ -1,0 +1,307 @@
+/* v2 Queue — page-style container with bordered Now-Playing block,
+   Up Next table, and dimmed Played history. Direct v2 tokens for
+   clarity (the `--tn-*` aliases worked but routed every value
+   through one extra hop). */
+
+.wrap {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  padding: 0 0 60px;
+  animation: fadeUp 280ms ease-out both;
+}
+
+.pageHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 36px 48px 28px;
+  max-width: 1480px;
+  flex-wrap: wrap;
+}
+.statLine {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.title {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  margin: 0;
+  color: var(--fg);
+}
+.headerActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  padding: 9px 14px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: border-color 120ms linear, color 120ms linear, background 120ms linear;
+}
+.actionBtn:hover { background: var(--bg-hover); }
+.actionBtnActive {
+  border-color: var(--gold-soft);
+  color: var(--gold);
+}
+.actionBtnDanger { color: var(--red); }
+.actionBtnDanger:hover { border-color: var(--red); }
+.actionGlyph {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.section { padding: 0 48px 32px; max-width: 1480px; }
+.sectionLabel {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-weight: 500;
+  margin-bottom: 12px;
+  display: block;
+}
+.sectionLabelDim { color: var(--fg-dim); }
+.sectionHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+/* Now-playing block — flat `bg-raised` slab matching the bundle.
+   Gold tick replaced by the inline INSTANT/quality badges to flag
+   "this is current" without painting a sidebar stripe across it. */
+.nowPlayingCard {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  background: var(--bg-raised);
+  padding: 18px;
+}
+.npArt {
+  width: 84px;
+  height: 84px;
+  background-image: repeating-linear-gradient(135deg, oklch(0.20 0.01 70) 0 6px, oklch(0.18 0.01 70) 6px 12px);
+  background-color: oklch(0.18 0.01 70);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.04);
+}
+.npArt img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.npMeta { min-width: 0; }
+.npTitle {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin-bottom: 4px;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.npArtist {
+  font-size: 14px;
+  color: var(--fg-soft);
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.npAlbum { color: var(--fg-mute); }
+.npBadges { display: flex; gap: 10px; align-items: center; }
+.qualityBadge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border: 1px solid oklch(0.55 0.10 78 / 0.7);
+  padding: 3px 8px;
+}
+.sourceLabel {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--fg-mute);
+}
+.npOpen {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  padding: 9px 14px;
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 120ms linear, background 120ms linear;
+}
+.npOpen:hover { background: var(--bg-hover); }
+
+/* Queue row — drag handle / index / art / title-sub / quality / dur / x */
+.row {
+  display: grid;
+  grid-template-columns: 16px 22px 44px minmax(0, 1fr) auto auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 9px 10px;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: background 120ms linear;
+}
+.row:hover, .row:focus-visible {
+  background: var(--bg-raised);
+  outline: none;
+}
+.rowDim { opacity: 0.5; }
+
+/* dnd-kit wraps each sortable row in its own outer node (we provide
+   the ref + transform style there). Inline-block + width:100%
+   matches the natural row flow; without this the wrap collapses
+   to its content width when transformed. */
+.rowWrap {
+  display: block;
+  width: 100%;
+}
+
+.rowDragging {
+  /* The row is lifted via transform during drag — dnd-kit applies
+     translate3d on the wrap so the visual feels like a real lift.
+     Subtle box-shadow communicates depth without going overboard. */
+  background: var(--bg-raised);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.rowHandle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-mute);
+  cursor: grab;
+}
+.rowIndex {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-mute);
+  text-align: right;
+}
+.rowThumb {
+  width: 44px;
+  height: 44px;
+  background-image: repeating-linear-gradient(135deg, oklch(0.20 0.01 70) 0 6px, oklch(0.18 0.01 70) 6px 12px);
+  background-color: oklch(0.18 0.01 70);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.04);
+}
+.rowThumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rowMeta { min-width: 0; }
+.rowTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.005em;
+}
+.rowSub {
+  font-size: 12.5px;
+  color: var(--fg-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rowQuality {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-mute);
+}
+.rowDuration {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-mute);
+  text-align: right;
+}
+.rowRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: var(--fg-mute);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  transition: color 120ms linear;
+}
+.rowRemove:hover { color: var(--fg); }
+
+.empty {
+  padding: 80px 48px;
+  color: var(--fg-soft);
+  font-size: 13px;
+}
+.emptyAction {
+  margin-top: 12px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  padding: 8px 14px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 80ms linear, color 80ms linear;
+}
+.emptyAction:hover { border-color: var(--gold); color: var(--gold); }
+.emptyHint {
+  padding: 16px 0;
+  color: var(--fg-soft);
+  font-size: 13px;
+}
+
+@media (max-width: 720px) {
+  .pageHead { padding: 22px 16px 18px; }
+  .title { font-size: 30px; }
+  .section { padding: 0 16px 28px; }
+  .nowPlayingCard { grid-template-columns: 64px minmax(0,1fr); }
+  .npOpen { grid-column: 1 / -1; justify-self: start; margin-top: 8px; }
+  .row { grid-template-columns: 16px 36px minmax(0,1fr) auto auto; }
+  /* Bigger tap targets on touch. The original 22×22 was below the
+     44px iOS minimum and made removing a row a precision exercise. */
+  .rowRemove { width: 44px; height: 44px; }
+  .rowDrag { width: 32px; height: 44px; touch-action: none; }
+}

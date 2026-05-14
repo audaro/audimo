@@ -1,0 +1,142 @@
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(10, 8, 6, 0.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+.dialog {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  width: 100%;
+  max-width: 480px;
+  padding: 28px 32px 24px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  font-family: var(--font-sans);
+}
+.title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--fg);
+  margin: 0 0 10px;
+}
+.message {
+  font-size: 13px;
+  color: var(--fg-soft);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  margin-bottom: 22px;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 22px;
+  align-items: center;
+}
+.cancel,
+.confirm {
+  font-size: 12px;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  letter-spacing: -0.005em;
+  transition: color 80ms linear;
+}
+.cancel { color: var(--fg-soft); }
+.cancel:hover { background: transparent; color: var(--fg); }
+.confirm {
+  color: var(--red);
+  font-weight: 700;
+  border: 1px solid var(--red);
+  padding: 8px 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 11px;
+}
+.confirm:hover {
+  opacity: 1;
+  background: var(--red);
+  color: var(--bg);
+}
+
+/* Text input for askPrompt() flows — sits between message and actions.
+   Brutalist treatment to match the rest of the modal: hard rules, no
+   rounded corners, accent-tan focus state. */
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 14px 0 4px;
+  padding: 10px 12px;
+  background: var(--bg-raised);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  letter-spacing: -0.005em;
+  outline: none;
+}
+.input:focus {
+  border-color: var(--gold);
+}
+
+.actionsDanger {}
+.confirmDanger {
+  /* Already red by default — placeholder for future tone-specific
+     tweaks (e.g. solid red fill on mobile sheet). */
+}
+
+/* ── Mobile sheet variant ──────────────────────────────────────
+   Renders inside MobileSheet on phones; .overlay / .dialog are
+   not used. Stretches the cancel/confirm buttons full-width and
+   stacks them vertically with confirm on top (closer to thumb
+   when reaching from below). */
+@media (max-width: 640px) {
+  .sheetBody {
+    padding: 4px 22px 8px;
+  }
+  .sheetBody .title {
+    font-size: 20px;
+    margin-bottom: 12px;
+  }
+  .sheetBody .message {
+    font-size: 14px;
+    margin-bottom: 22px;
+  }
+  .sheetBody .input {
+    font-size: 16px; /* iOS Safari zoom-on-focus guard */
+    padding: 12px 14px;
+  }
+  .sheetBody .actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+    align-items: stretch;
+    margin-top: 8px;
+  }
+  .sheetBody .cancel {
+    padding: 14px;
+    min-height: 48px;
+    font-size: 14px;
+    border: 1px solid var(--line);
+    color: var(--fg);
+  }
+  .sheetBody .confirm {
+    padding: 14px;
+    min-height: 48px;
+    font-size: 13px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  /* Destructive (danger) variant — solid red fill so the user
+     sees the gravity before their thumb commits. */
+  .sheetBody .confirmDanger {
+    background: var(--red);
+    color: var(--bg);
+    border-color: var(--red);
+  }
+}

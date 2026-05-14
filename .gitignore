@@ -1,0 +1,76 @@
+# ── OS ──────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Secrets ─────────────────────────────────────────────────────
+.env
+.env.local
+backend/.env
+*.key
+*.pem
+
+# ── Python ──────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+backend/venv/
+backend/.venv/
+backend/env/
+
+# ── Node / Vite ─────────────────────────────────────────────────
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Local data: DBs, caches, user uploads ───────────────────────
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+backend/tunnel.db
+backend/cache/
+backend/covers/
+backend/audiobooks/
+backend/uploads/
+backend/downloads/
+backend/tmp/
+
+# ── Editor ──────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*~
+
+# ── Misc ────────────────────────────────────────────────────────
+*.bak
+*-bak
+*.orig
+
+# ── Build artifacts (PyInstaller, Playwright, Tauri) ────────────
+backend/build/
+backend/dist/
+streaming_server/build/
+streaming_server/dist/
+streaming_server/.venv/
+frontend/test-results/
+frontend/src-tauri/target/
+# PyInstaller-built sidecars; regenerate via the .spec files
+frontend/src-tauri/binaries/audimo-backend
+frontend/src-tauri/binaries/audimo-streaming
+frontend/src-tauri/binaries/audimo-aio
+frontend/src-tauri/binaries/audimo-indexers
+frontend/src-tauri/binaries/*-aarch64-apple-darwin
+frontend/src-tauri/binaries/*-x86_64-apple-darwin
+frontend/src-tauri/binaries/*-x86_64-pc-windows-msvc.exe
+frontend/src-tauri/binaries/*-x86_64-unknown-linux-gnu
+
+# ── Local-only ──────────────────────────────────────────────────
+.claude/

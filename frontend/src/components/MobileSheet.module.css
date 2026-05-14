@@ -1,0 +1,104 @@
+/* Shared mobile bottom-sheet primitive. Hidden on desktop —
+   callers render a normal centered dialog there. */
+
+.overlay {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .overlay {
+    position: fixed;
+    inset: 0;
+    /* Above NowPlaying (z-1100) so a sheet opened from inside it
+       (queue, overflow menu) sits ON TOP of the player surface
+       instead of behind it. Toast (z-2100) still wins so the user
+       sees error toasts even with multiple sheets stacked. */
+    z-index: 1200;
+    background: oklch(0 0 0 / 0.5);
+    display: flex;
+    align-items: flex-end;
+    animation: ms-fade 160ms ease;
+  }
+}
+@keyframes ms-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.sheet {
+  width: 100%;
+  max-height: 90vh;
+  background: var(--bg);
+  color: var(--fg);
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+  padding: 8px 0 0;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4);
+  animation: ms-up 220ms cubic-bezier(.2,.8,.2,1);
+  transition: transform 200ms ease;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+}
+@keyframes ms-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* Danger tone — used by destructive confirms (delete file, remove
+   from library) to give users a brief visual pause before they
+   tap through muscle memory. Slim red bar at the top echoes the
+   inline danger badge pattern used elsewhere. */
+.sheetDanger {
+  border-top: 2px solid var(--red);
+  padding-top: 6px;
+}
+
+.grabber {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  margin: 6px auto 8px;
+  flex-shrink: 0;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 18px 12px;
+  flex-shrink: 0;
+}
+.title {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+.closeBtn {
+  background: transparent;
+  border: 0;
+  color: var(--fg-soft);
+  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin-right: -10px;
+  border-radius: 6px;
+}
+.closeBtn:hover { color: var(--fg); }
+
+.body {
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  /* Caller's content gets the home-indicator clearance for free
+     so it doesn't have to think about safe areas. */
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  -webkit-overflow-scrolling: touch;
+}

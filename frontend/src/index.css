@@ -1,0 +1,365 @@
+/* ─────────────────────────────────────────────────────────────────
+   Audimo v2 — design foundation.
+
+   Token + utility layer ported from the Claude Design bundle
+   (`Audimo v2.html` + `Audimo Mobile.html`). Per-screen CSS modules
+   layer on top; legacy `--tn-*` tokens are kept as aliases onto
+   the new palette so screens migrate one at a time.
+   ───────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* ── v2 palette (canonical) — oklch backgrounds, gold accent ── */
+  --bg-deep: oklch(0.124 0.006 60);
+  --bg: oklch(0.148 0.006 60);
+  --bg-raised: oklch(0.185 0.008 60);
+  --bg-card: oklch(0.205 0.008 60);
+  --bg-hover: oklch(0.235 0.008 60);
+  --line: oklch(0.255 0.008 60);
+  --line-soft: oklch(0.215 0.008 60);
+  --fg: oklch(0.928 0.012 80);
+  --fg-soft: oklch(0.78 0.012 80);
+  --fg-mute: oklch(0.55 0.010 70);
+  --fg-dim: oklch(0.42 0.010 70);
+  --gold: oklch(0.80 0.115 78);
+  --gold-dim: oklch(0.62 0.090 78);
+  --gold-soft: oklch(0.42 0.060 78);
+  --red: oklch(0.65 0.15 28);
+  --green: oklch(0.72 0.13 145);
+  --blue: oklch(0.72 0.10 245);
+
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+
+  /* ── Layout (desktop default; mobile overrides below) ───────── */
+  --sidebar-w: 248px;
+  --player-h: 92px;
+  --bottom-nav-h: 56px;
+  --status-bar-h: 60px;     /* mobile only */
+  --mini-player-h: 64px;    /* mobile only */
+  --tab-bar-h: 90px;        /* mobile only — taller than nav-h to clear home indicator */
+
+  /* ── Legacy `--tn-*` aliases — kept until every screen migrates.
+        These point at the closest v2 equivalent so existing CSS
+        modules render against the new palette without edits. ──── */
+  --tn-bg: var(--bg);
+  --tn-panel: var(--bg-raised);
+  --tn-panel-2: var(--bg-card);
+  --tn-fg: var(--fg);
+  --tn-dim: var(--fg-mute);
+  --tn-dim-2: var(--fg-soft);
+  --tn-rule: var(--line-soft);
+  --tn-rule-2: var(--line);
+  --tn-accent: var(--gold);
+  --tn-accent-dim: var(--gold-dim);
+  --tn-warn: var(--red);
+  --tn-row-hover: var(--bg-raised);
+  --tn-row-active: var(--bg-card);
+  --tn-row-active-hover: var(--bg-hover);
+  --tn-font: var(--font-sans);
+  --tn-mono: var(--font-mono);
+
+  /* Generic semantic aliases used by a few older modules. */
+  --surface: var(--bg-raised);
+  --border: var(--line);
+  --text: var(--fg);
+  --muted: var(--fg-mute);
+  --accent: var(--gold);
+}
+
+/* ── Light theme — activated via [data-theme="light"] on <html>.
+   App.jsx toggles this attribute from the `theme` setting in the
+   zustand store (persisted to localStorage). Every screen reads its
+   colors from the CSS variables above, so the only thing that has
+   to change for light mode is the variable values — no per-screen
+   overrides. The gold accent stays the same (brand color), just
+   darkened slightly for contrast on light surfaces. ─────────── */
+:root[data-theme="light"] {
+  --bg-deep: oklch(0.97 0.004 80);
+  --bg: oklch(0.985 0.003 80);
+  --bg-raised: oklch(0.955 0.005 80);
+  --bg-card: oklch(0.93 0.005 80);
+  --bg-hover: oklch(0.91 0.006 80);
+  --line: oklch(0.85 0.006 80);
+  --line-soft: oklch(0.90 0.005 80);
+  --fg: oklch(0.18 0.010 60);
+  --fg-soft: oklch(0.36 0.010 60);
+  --fg-mute: oklch(0.50 0.010 60);
+  --fg-dim: oklch(0.62 0.010 60);
+  --gold: oklch(0.58 0.130 78);
+  --gold-dim: oklch(0.65 0.100 78);
+  --gold-soft: oklch(0.78 0.060 78);
+}
+
+@media (max-width: 640px) {
+  :root {
+    --sidebar-w: 0px;
+    --player-h: var(--mini-player-h);
+  }
+  /* Kill double-tap-to-zoom on every interactive element. Mobile
+     Safari treats a quick second tap on a button as "zoom in,"
+     which fires unintended scale changes whenever users tap fast
+     (e.g. add-to-playlist + button → row beneath, or repeated
+     tap on prev/next). `touch-action: manipulation` tells the
+     browser the gesture is a click, not a potential zoom anchor. */
+  button, a, [role="button"], input, select, textarea, label {
+    touch-action: manipulation;
+  }
+  /* Inputs ≥ 16px font-size never trigger iOS Safari's zoom-on-
+     focus. Most of our inputs already pass; this is the safety
+     net for any that don't. */
+  input, select, textarea {
+    font-size: max(16px, 1em);
+  }
+}
+
+/* ── Touch-reveal of hover-hidden row actions ──────────────────
+   CSS Modules + Vite's CSS minifier strips non-max-width media
+   queries, so we can't put `@media (hover: none) { .actions {
+   opacity: 1 }}` inside a .module.css file. Instead App.jsx flips
+   <html data-touch="true"> on touch devices at mount, and these
+   global rules reach the hashed class via attribute selectors.
+   Width-gated to mobile so a desktop with a touch screen doesn't
+   permanently lose the hover affordance. */
+@media (max-width: 640px) {
+  /* TrackRow (search results, etc.) uses .actions; LibraryView
+     uses .rowActions. Both hide-until-hover on desktop — reveal
+     them on touch so the buttons are reachable. We don't enlarge
+     the buttons here because the row grid reserves a fixed
+     narrow column for the actions; a wider button would overflow
+     and visually collide with the artist text. Touch-target
+     bumps for those buttons land with the grid rework in Phase 4. */
+  [data-touch="true"] [class*="_actions_"],
+  [data-touch="true"] [class*="_rowActions_"] {
+    opacity: 1 !important;
+  }
+  /* Detail-view back buttons — Artist (.back), Podcast / Audiobook
+     (.backBtn). Desktop sizes them small (~28-32px tall, 6px
+     padding) which is below the iOS 44pt minimum. Add vertical
+     hit area on touch without changing the existing visual chrome
+     much. The :not() guards exclude unrelated class hashes that
+     happen to contain "back" (background / backdrop). */
+  [data-touch="true"] [class*="_backBtn_"],
+  [data-touch="true"] [class*="_back_"]:not([class*="_background_"]):not([class*="_backdrop_"]) {
+    min-height: 44px;
+    padding-left: 14px;
+    padding-right: 14px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--fg);
+  /* `100dvh` follows the dynamic viewport — shrinks/grows with the
+     Safari URL bar — so the bottom-nav + mini-player sit on the
+     actual bottom edge instead of being pushed under the URL bar
+     when it expands. Falls back to 100vh on browsers that don't
+     support dvh. */
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.45;
+  font-feature-settings: "ss01", "ss02", "cv11";
+}
+
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+input, select, textarea { font: inherit; color: inherit; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--line); border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--fg-dim); }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Focus indicators. Quiet 1px gold outline for buttons + non-text
+   controls; text fields opt out so the per-component border-color
+   change is the only visible affordance. */
+:focus-visible { outline: 1px solid var(--gold); outline-offset: 1px; }
+input:focus, input:focus-visible,
+select:focus, select:focus-visible,
+textarea:focus, textarea:focus-visible { outline: none; }
+button:focus:not(:focus-visible) { outline: none; }
+
+/* ── Type utilities ──────────────────────────────────────────── */
+.label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-mute); font-weight: 500; }
+.mono { font-family: var(--font-mono); }
+.h-display { font-weight: 800; letter-spacing: -0.02em; }
+.h-1 { font-size: 44px; font-weight: 800; letter-spacing: -0.025em; line-height: 1.05; }
+.h-2 { font-size: 28px; font-weight: 700; letter-spacing: -0.018em; line-height: 1.1; }
+.h-3 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+.h-4 { font-size: 14px; font-weight: 600; letter-spacing: -0.005em; }
+.text-soft { color: var(--fg-soft); }
+.text-mute { color: var(--fg-mute); }
+.text-dim { color: var(--fg-dim); }
+.text-gold { color: var(--gold); }
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  background: transparent;
+  transition: background 120ms, border-color 120ms;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: var(--font-sans);
+}
+.btn:hover { background: var(--bg-hover); }
+.btn.primary { background: var(--gold); color: oklch(0.18 0.02 70); border-color: var(--gold); font-weight: 600; }
+.btn.primary:hover { background: oklch(0.86 0.115 78); }
+.btn.ghost { border-color: transparent; }
+.btn.ghost:hover { background: var(--bg-hover); }
+
+/* ── Badges ──────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-soft);
+  white-space: nowrap;
+}
+.badge.gold { color: var(--gold); border-color: oklch(0.55 0.10 78 / 0.7); }
+.badge.solid { background: var(--gold); color: oklch(0.18 0.02 70); border-color: var(--gold); font-weight: 600; }
+.badge.new { color: var(--gold); border-color: oklch(0.55 0.10 78 / 0.5); }
+
+/* ── Artwork placeholder + frame ─────────────────────────────── */
+.art {
+  background-image: repeating-linear-gradient(135deg, oklch(0.20 0.01 70) 0 6px, oklch(0.18 0.01 70) 6px 12px);
+  background-color: oklch(0.18 0.01 70);
+  aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+  color: oklch(0.50 0.05 70);
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.12em;
+  flex: none;
+}
+.art img, .art-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.art.frame { box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.04); }
+
+/* ── Progress bar ────────────────────────────────────────────── */
+.bar { height: 2px; background: var(--line); position: relative; overflow: hidden; }
+.bar > i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--gold); display: block; }
+
+/* ── Icon defaults ───────────────────────────────────────────── */
+.icn { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.icn.lg { width: 20px; height: 20px; }
+.icn.xl { width: 24px; height: 24px; }
+
+/* ── Page chrome ─────────────────────────────────────────────── */
+.page { padding: 36px 48px 60px; max-width: 1480px; }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 28px; gap: 32px; }
+.page-head h1 { margin: 0; }
+.page-head .meta { color: var(--fg-mute); font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+@media (max-width: 640px) {
+  .page { padding: 16px 14px 24px; }
+  .page-head { margin-bottom: 18px; gap: 12px; }
+  .h-1 { font-size: 30px; }
+  .h-2 { font-size: 22px; }
+}
+
+/* ── Generic row + grid + table primitives ───────────────────── */
+.row-line { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line-soft); }
+.row-line:last-child { border-bottom: 0; }
+
+.tbl {
+  display: grid; align-items: center; gap: 14px;
+  padding: 10px 10px;
+  border-bottom: 1px solid var(--line-soft);
+  width: 100%; box-sizing: border-box;
+  text-align: left;
+  background: transparent;
+  border-left: 0; border-right: 0; border-top: 0;
+  color: inherit; font: inherit; cursor: pointer;
+}
+button.tbl:hover, button.tbl:focus-visible { background: var(--bg-raised); outline: 0; }
+.tbl-head { padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.cell-title { min-width: 0; text-align: left; }
+.cell-title .ttl { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-title .sub { color: var(--fg-soft); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-r { text-align: right; }
+
+.track-row {
+  display: grid; grid-template-columns: 36px 44px 1fr auto auto;
+  align-items: center; gap: 14px;
+  padding: 9px 8px; cursor: pointer;
+}
+.track-row:hover { background: var(--bg-raised); }
+.track-row .idx { font-family: var(--font-mono); color: var(--fg-mute); font-size: 12px; text-align: right; }
+.track-row .ttl { font-weight: 600; color: var(--fg); }
+.track-row .sub { color: var(--fg-soft); font-size: 12.5px; }
+
+.hr { height: 1px; background: var(--line-soft); border: 0; margin: 0; }
+
+/* ── Range slider — gold accent matching the v2 player ───────── */
+input[type=range].audimo {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 24px;
+  background: transparent; cursor: pointer;
+  padding: 0; margin: 0;
+}
+input[type=range].audimo::-webkit-slider-runnable-track {
+  height: 4px; background: linear-gradient(to right, var(--gold) var(--audimo-fill, 0%), var(--line) var(--audimo-fill, 0%));
+}
+input[type=range].audimo::-moz-range-track { height: 4px; background: var(--line); }
+input[type=range].audimo::-moz-range-progress { height: 4px; background: var(--gold); }
+input[type=range].audimo::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px;
+  background: var(--gold); margin-top: -5px;
+  border: 2px solid var(--bg-deep);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+input[type=range].audimo::-moz-range-thumb {
+  width: 14px; height: 14px;
+  background: var(--gold);
+  border: 2px solid var(--bg-deep);
+}
+input[type=range].audimo:focus { outline: none; }
+
+/* ── Enter animations ────────────────────────────────────────── */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: none; } }
+.enter { animation: fadeUp 280ms ease-out both; }
+
+/* ── Native <select> rebrand (kept from previous foundation) ─── */
+select {
+  appearance: none; -webkit-appearance: none;
+  font-family: inherit; font-size: 13px;
+  color: var(--fg);
+  background-color: transparent;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%238a857d' stroke-width='1.4' fill='none' stroke-linecap='square'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 7px 28px 7px 10px;
+  outline: none; cursor: pointer;
+  transition: border-color 80ms linear;
+}
+select:hover { border-color: var(--fg-dim); }
+select:focus { border-color: var(--gold); }
+select:disabled { opacity: 0.45; cursor: default; }
+select option { background-color: var(--bg-raised); color: var(--fg); }
+
+/* ── Legacy `tn-*` interaction helpers (kept for old screens) ─── */
+.tn-row { transition: background 80ms linear; }
+.tn-row:hover { background: var(--bg-raised); }
+.tn-row-active { background: var(--bg-card); }
+.tn-row-active:hover { background: var(--bg-hover); }
+.tn-row .tn-row-actions { opacity: 0; transition: opacity 80ms linear; }
+.tn-row:hover .tn-row-actions { opacity: 1; }
+.tn-link { transition: color 80ms linear; cursor: pointer; }
+.tn-link:hover { color: var(--fg) !important; }
+.tn-navlink { transition: color 80ms linear, background 80ms linear; }
+.tn-navlink:hover { color: var(--fg) !important; background: var(--bg-card); }

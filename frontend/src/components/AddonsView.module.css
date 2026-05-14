@@ -1,0 +1,764 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.header {
+  padding: 32px 36px 24px;
+  flex-shrink: 0;
+}
+
+/* ── Design v2 page head + tab strip ── */
+.pageHead {
+  padding: 36px 48px 18px;
+  flex-shrink: 0;
+  max-width: 1480px;
+}
+.statLine {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.lede {
+  margin: 14px 0 0;
+  color: var(--fg-soft);
+  font-size: 13px;
+  line-height: 1.55;
+  max-width: 64ch;
+}
+.tabBar {
+  display: flex;
+  gap: 0;
+  padding: 0 48px;
+  border-bottom: 1px solid var(--line-soft);
+  flex-shrink: 0;
+}
+.tab {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  background: transparent;
+  color: var(--fg-soft);
+  border: 0;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  transition: color 80ms linear;
+}
+.tab:hover { color: var(--fg); }
+.tabActive {
+  color: var(--fg);
+  border-bottom-color: var(--gold);
+}
+.tabCount {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-mute);
+  font-weight: 400;
+}
+
+.title {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--fg);
+  margin: 0;
+  line-height: 1.05;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--fg-soft);
+  margin: 0;
+}
+
+/* ── For developers tab ── */
+.devBox {
+  padding: 18px 48px 36px;
+  max-width: 1480px;
+}
+.devCard {
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  padding: 28px;
+  max-width: 880px;
+}
+.devTitle {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 0 0 18px;
+  color: var(--fg);
+}
+.devSectionLabel {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-weight: 500;
+  margin: 22px 0 10px;
+}
+.devEndpointGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: 8px 18px;
+  align-items: baseline;
+}
+.devEndpoint {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--gold);
+  white-space: nowrap;
+}
+.devEndpointDesc {
+  font-size: 12.5px;
+  color: var(--fg-soft);
+  line-height: 1.55;
+}
+.devEndpointDesc code {
+  font-family: var(--font-mono);
+  color: var(--fg);
+  background: var(--bg);
+  padding: 1px 5px;
+  font-size: 11.5px;
+}
+
+/* Install-by-URL box pinned to the top of the Installed tab — used to
+   live behind the Advanced disclosure. Visual rhythm sits between
+   the toolbar (above) and the installed-addon list (below). */
+.installByUrlBox {
+  padding: 14px 16px 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--line);
+  background: transparent;
+}
+.installByUrlLabel {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.installByUrlHint {
+  font-size: 12.5px;
+  color: var(--fg-soft);
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
+.installBox {
+  margin: 18px 48px 24px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.label {
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--fg-mute);
+}
+
+.installRow {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 8px 2px;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  color: var(--fg);
+  outline: none;
+  transition: border-bottom-color 80ms linear;
+  min-width: 0;
+}
+.input::placeholder { color: var(--fg-soft); }
+.input:focus { border-bottom-color: var(--line); }
+
+.installBtn {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--fg);
+  border-radius: 0;
+  padding: 8px 18px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 80ms linear, background 80ms linear;
+  font-family: var(--font-sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.installBtn:hover:not(:disabled) {
+  background: var(--fg);
+  color: var(--bg);
+}
+.installBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.error {
+  font-size: 11px;
+  color: var(--red);
+  margin-top: 2px;
+}
+
+.ioRow {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.ioBtn {
+  background: transparent;
+  color: var(--fg-soft);
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: color 80ms linear;
+  font-family: var(--font-sans);
+}
+.ioBtn:hover { color: var(--fg); border: none; }
+
+.ioHint {
+  font-size: 11px;
+  color: var(--fg-mute);
+  margin-left: 4px;
+}
+
+.list {
+  padding: 0 36px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+}
+
+.empty {
+  padding: 60px 0;
+  color: var(--fg-soft);
+  font-size: 13px;
+  text-align: center;
+}
+
+.addonRow {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  padding: 16px 0;
+}
+
+.addonInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.addonName {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: var(--fg);
+}
+
+.addonDesc {
+  font-size: 12px;
+  color: var(--fg-soft);
+}
+
+.addonMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.addonUrl {
+  font-size: 11px;
+  color: var(--fg-mute);
+  font-family: var(--font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 320px;
+}
+
+.cap {
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: transparent;
+  color: var(--fg-soft);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 1px 6px;
+}
+
+.addonActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.toggleBtn {
+  background: transparent;
+  color: var(--fg-soft);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 5px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 80ms linear, border-color 80ms linear, background 80ms linear;
+  min-width: 44px;
+  font-family: var(--font-sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.toggleBtn:hover {
+  background: transparent;
+  color: var(--fg);
+  border-color: var(--fg);
+}
+
+.toggleOn {
+  background: var(--fg);
+  color: var(--bg);
+  border-color: var(--fg);
+}
+.toggleOn:hover { opacity: 1; background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+.removeBtn {
+  background: transparent;
+  color: var(--fg-soft);
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 80ms linear;
+  font-family: var(--font-sans);
+}
+.removeBtn:hover { color: var(--red); border: none; }
+
+.addonCard {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.addonCard .addonRow {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 16px 0;
+}
+
+.installProgressWrap {
+  padding: 0 0 12px;
+}
+
+.installProgressBar {
+  height: 3px;
+  background: var(--line-soft);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.installProgressFill {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+@keyframes indeterminate {
+  0%   { transform: translateX(-100%) scaleX(0.4); }
+  50%  { transform: translateX(60%)   scaleX(0.6); }
+  100% { transform: translateX(200%)  scaleX(0.4); }
+}
+
+.installProgressIndeterminate {
+  width: 40% !important;
+  animation: indeterminate 1.4s ease-in-out infinite;
+  transform-origin: left center;
+}
+
+.installProgressMsg {
+  font-size: 11px;
+  color: var(--fg-soft);
+  margin-top: 5px;
+}
+
+.filterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.chip {
+  background: transparent;
+  color: var(--fg-soft);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: color 80ms linear, border-color 80ms linear, background 80ms linear;
+}
+.chip:hover { color: var(--fg); border-color: var(--fg); }
+
+.chipActive {
+  background: var(--fg);
+  color: var(--bg);
+  border-color: var(--fg);
+}
+.chipActive:hover { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+/* ── Disclosures ── */
+.disclosureBtn {
+  background: transparent;
+  border: none;
+  color: var(--fg-soft);
+  padding: 8px 0;
+  margin-top: 6px;
+  font-size: 11px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 80ms linear;
+  align-self: flex-start;
+}
+.disclosureBtn:hover { color: var(--fg); }
+
+.disclosureCaret {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--fg-mute);
+  transition: transform 100ms linear;
+  transform-origin: 50% 50%;
+  width: 10px;
+}
+.disclosureCaretOpen { transform: rotate(90deg); }
+
+.disclosureHint {
+  color: var(--fg-mute);
+  margin-left: 2px;
+}
+
+.disclosureBody {
+  padding: 4px 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Advanced section ── */
+.advancedBox {
+  margin: 0 48px 36px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+
+.advancedToggle {
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  padding: 16px 22px;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 80ms linear;
+}
+.advancedToggle:hover { color: var(--fg); }
+
+.advancedBody {
+  padding: 0 22px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.advancedSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.advancedSectionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+
+@media (max-width: 640px) {
+  .advancedBox { margin: 0 16px 24px; }
+  .advancedToggle { padding: 14px 16px; }
+  .advancedBody { padding: 0 16px 16px; }
+}
+
+.settingsBtn {
+  background: transparent;
+  color: var(--fg-soft);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 5px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 80ms linear, border-color 80ms linear;
+  font-family: var(--font-sans);
+}
+.settingsBtn:hover { color: var(--fg); border-color: var(--fg); }
+
+.contextRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0 4px;
+  flex-wrap: wrap;
+}
+
+.contextLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  white-space: nowrap;
+}
+
+.contextCheck {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--fg-mute);
+  user-select: none;
+}
+
+.contextCheck input[type="checkbox"] {
+  width: 13px;
+  height: 13px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+.contextCheck:hover { color: var(--fg); }
+
+.settingsPanel {
+  border-top: 1px solid var(--line-soft);
+  padding: 18px 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: transparent;
+  margin-bottom: 8px;
+}
+.settingsPanelTitle {
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--fg-mute);
+  margin-bottom: 4px;
+}
+.settingsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0 4px;
+  border-top: 1px solid var(--line-soft);
+}
+.settingsSection:first-of-type { border-top: none; padding-top: 4px; }
+.settingsSectionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: var(--fg);
+  margin-bottom: 2px;
+}
+.settingsField { display: flex; flex-direction: column; gap: 4px; }
+.settingsLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fg);
+  letter-spacing: -0.005em;
+}
+.settingsDesc { font-size: 11px; color: var(--fg-soft); }
+.required { color: var(--red); margin-left: 2px; }
+.settingsInput {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 7px 2px;
+  font-size: 13px;
+  color: var(--fg);
+  outline: none;
+  transition: border-bottom-color 80ms linear;
+  font-family: var(--font-sans);
+}
+.settingsInput:focus { border-bottom-color: var(--line); }
+.settingsFooter { display: flex; gap: 22px; margin-top: 6px; }
+.saveSettingsBtn {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--fg);
+  border-radius: 0;
+  padding: 7px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 80ms linear, background 80ms linear;
+  font-family: var(--font-sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.saveSettingsBtn:hover:not(:disabled) { background: var(--fg); color: var(--bg); }
+.saveSettingsBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.cancelSettingsBtn {
+  background: transparent;
+  color: var(--fg-soft);
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 80ms linear;
+  font-family: var(--font-sans);
+}
+.cancelSettingsBtn:hover { background: transparent; color: var(--fg); }
+
+.docsBox {
+  margin: 0 36px 36px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 22px;
+  background: transparent;
+}
+.docsTitle {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -0.005em;
+  color: var(--fg);
+}
+.docsText {
+  font-size: 12px;
+  color: var(--fg-soft);
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+.docsList {
+  font-size: 12px;
+  color: var(--fg-soft);
+  margin: 0 0 8px;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1.5;
+}
+.docsBox code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 1px 5px;
+  color: var(--fg);
+}
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .header { padding: 22px 16px 18px; }
+  .title { font-size: 30px; }
+  .pageHead { padding: 22px 16px 14px; }
+  .lede { font-size: 12.5px; }
+  .tabBar { padding: 0 16px; gap: 0; overflow-x: auto; flex-wrap: nowrap; }
+  .tab { padding: 12px 12px; font-size: 13px; white-space: nowrap; }
+  .devBox { padding: 14px 16px 28px; }
+  .devCard { padding: 18px; }
+  .devEndpointGrid { grid-template-columns: minmax(0, 1fr); gap: 4px 0; }
+  .devEndpoint { padding-top: 6px; }
+  .installByUrlBox { padding: 12px 14px 14px; }
+  .installBox { margin: 0 16px 18px; padding: 16px; }
+  .installRow { flex-direction: column; align-items: stretch; gap: 10px; }
+  .installBtn { width: 100%; padding: 10px; }
+  .ioRow { gap: 14px; }
+  .list { padding: 0 16px 24px; }
+  .addonRow {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 14px 0;
+  }
+  .addonActions { width: 100%; justify-content: flex-end; }
+  .docsBox { margin: 0 16px 24px; padding: 16px; }
+}

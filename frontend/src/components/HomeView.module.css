@@ -1,0 +1,446 @@
+/* v2 Today screen — list-driven layout, two-column grid that
+   collapses to single-column when the stats rail isn't shown
+   (or on mobile). Sections share a bordered SectionHead and a
+   .row primitive that mirrors the bundle's ListRow. */
+
+.wrap {
+  padding: 36px 48px 60px;
+  max-width: 1480px;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  height: 100%;
+  overflow-y: auto;
+  animation: fadeUp 280ms ease-out both;
+}
+
+/* ── Page head ───────────────────────────────────────────────── */
+.pageHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  gap: 32px;
+}
+.title {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  margin: 0;
+  color: var(--fg);
+}
+.subtitle {
+  margin-top: 6px;
+  color: var(--fg-soft);
+  font-size: 14px;
+}
+.meta {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+/* ── Layout: main column + optional right rail ───────────────── */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 56px;
+}
+.layoutNoRail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.sections { display: grid; gap: 36px; min-width: 0; }
+
+/* ── Section + SectionHead ───────────────────────────────────── */
+.section {}
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.sectionTitleGroup {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  margin: 0;
+  color: var(--fg);
+}
+.sectionTag {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-weight: 500;
+}
+.sectionBody { display: flex; flex-direction: column; }
+
+.actionLink {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-soft);
+  cursor: pointer;
+  transition: color 120ms linear;
+}
+.actionLink:hover { color: var(--gold); }
+
+/* ── Row (ListRow): art + title/sub + optional right ─────────── */
+.row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 8px 4px;
+  width: 100%;
+  text-align: left;
+  border-bottom: 1px solid var(--line-soft);
+  background: transparent;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: background 120ms linear;
+}
+.row:hover { background: var(--bg-raised); }
+.row:last-child { border-bottom: 0; }
+
+.rowThumb {
+  width: 40px; height: 40px;
+  background-image: repeating-linear-gradient(135deg, oklch(0.20 0.01 70) 0 6px, oklch(0.18 0.01 70) 6px 12px);
+  background-color: oklch(0.18 0.01 70);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.04);
+}
+.rowImg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rowMono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-mute);
+}
+
+.rowMeta { min-width: 0; }
+.rowTitle {
+  font-weight: 500;
+  font-size: 13.5px;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rowSub {
+  color: var(--fg-soft);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowBadges { display: inline-flex; gap: 6px; }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-soft);
+  white-space: nowrap;
+}
+.rowRight {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-mute);
+  white-space: nowrap;
+}
+
+/* ── Grid layout (used for some addon shelves) ───────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 18px;
+}
+.gridCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+}
+.cover {
+  position: relative;
+  aspect-ratio: 1;
+  background-image: repeating-linear-gradient(135deg, oklch(0.20 0.01 70) 0 6px, oklch(0.18 0.01 70) 6px 12px);
+  background-color: oklch(0.18 0.01 70);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.04);
+}
+.coverImg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.monogram {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--fg-mute);
+}
+.gridBadges {
+  position: absolute;
+  left: 8px; bottom: 8px;
+  display: flex; gap: 4px;
+}
+.cardTitle {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cardSub {
+  font-size: 11.5px;
+  color: var(--fg-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Empty state ─────────────────────────────────────────────── */
+.emptyCard {
+  border: 1px solid var(--line);
+  padding: 36px 32px;
+  margin-bottom: 36px;
+  max-width: 640px;
+}
+.emptyTitle {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0 0 10px;
+  color: var(--fg);
+}
+.emptyBody {
+  font-size: 13px;
+  color: var(--fg-soft);
+  line-height: 1.55;
+  margin: 0 0 18px;
+  max-width: 60ch;
+}
+.emptyButtons { display: flex; gap: 10px; flex-wrap: wrap; }
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  background: var(--gold);
+  border: 1px solid var(--gold);
+  color: oklch(0.18 0.02 70);
+  padding: 9px 16px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms linear;
+}
+.primaryBtn:hover { background: oklch(0.86 0.115 78); }
+.secondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  padding: 9px 16px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 120ms linear, background 120ms linear;
+}
+.secondaryBtn:hover { background: var(--bg-hover); }
+
+/* ── Right rail (stats) ──────────────────────────────────────── */
+.rail {
+  display: grid;
+  gap: 36px;
+  align-content: start;
+}
+.railSection {}
+.railLabel {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-weight: 500;
+  margin-bottom: 14px;
+}
+.railNumber {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.railNumberValue {
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--fg);
+}
+.railNumberUnit {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-mute);
+  letter-spacing: 0.1em;
+}
+.railBars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 32px;
+  margin-bottom: 6px;
+}
+.railBar {
+  flex: 1;
+  min-height: 2px;
+  background: var(--line);
+  transition: background 120ms linear;
+}
+.railBarToday { background: var(--fg-soft); }
+.railBarLabels {
+  display: flex;
+  justify-content: space-between;
+}
+.railBarLabels span {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--fg-dim);
+  flex: 1;
+  text-align: center;
+}
+.railBarLabelToday { color: var(--fg-soft) !important; font-weight: 600; }
+.railStreak {
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+}
+
+.railArtistRow {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 5px 0;
+  font-size: 13px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.railArtistRow:last-child { border-bottom: 0; }
+.railArtistRank {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-mute);
+}
+.railArtistName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg);
+}
+.railArtistHours {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-mute);
+}
+
+.railMixBar {
+  display: flex;
+  height: 4px;
+  margin-bottom: 12px;
+  background: var(--line);
+  overflow: hidden;
+}
+.railMixSeg {
+  height: 100%;
+  background: var(--fg-soft);
+}
+.railMixRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 4px 0;
+  font-size: 12.5px;
+}
+.railMixName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg);
+}
+.railMixPct {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-mute);
+}
+
+/* ── Mobile ──────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 36px;
+  }
+}
+
+@media (max-width: 640px) {
+  .wrap { padding: 18px 14px 24px; }
+  .pageHead {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .title { font-size: 30px; }
+  /* Style the addon-count line as a chip on mobile rather than
+     floating uppercase text under the date — desktop renders it
+     top-right (clearly a status label); on mobile the same styling
+     left it looking like a loose label. */
+  .meta {
+    font-size: 10px;
+    padding: 4px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--fg-soft);
+    background: var(--bg-raised);
+    align-self: flex-start;
+  }
+  .sections { gap: 28px; }
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+  }
+  .rail { gap: 28px; }
+  .railNumberValue { font-size: 36px; }
+}

@@ -1,0 +1,34 @@
+/* MoreSheet — uses the shared MobileSheet primitive for chrome.
+   This module only styles the list rows; sheet, grabber, header,
+   and close button live in MobileSheet.module.css. */
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.row {
+  display: grid;
+  grid-template-columns: 32px 1fr 16px;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--line-soft);
+  padding: 16px 22px;
+  min-height: 56px;
+  color: var(--fg);
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 80ms linear;
+}
+.row:active { background: var(--bg-raised); }
+.rowLabel {
+  font-weight: 500;
+}
+.chev {
+  color: var(--fg-mute);
+}

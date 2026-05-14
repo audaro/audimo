@@ -1,0 +1,248 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.header {
+  padding: 32px 36px 0;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.tabs {
+  display: flex;
+  gap: 28px;
+  margin-top: 10px;
+  margin-bottom: -1px;
+}
+.tab {
+  padding: 12px 0;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid transparent;
+  background: none;
+  color: var(--fg-soft);
+  font-size: 12px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: color 80ms linear;
+  margin-bottom: -1px;
+}
+.tab:hover { color: var(--fg); }
+.tabActive { border-bottom-color: var(--gold); color: var(--fg); font-weight: 700; }
+
+.searchForm {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.searchInput {
+  flex: 1;
+  padding: 10px 2px;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-bottom-color 80ms linear;
+}
+.searchInput:focus { border-bottom-color: var(--gold); }
+
+.hint {
+  color: var(--fg-soft);
+  font-size: 12px;
+  padding: 24px 0 0;
+}
+
+.cardCta {
+  margin-top: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg);
+  font-size: 11px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: border-color 80ms linear, color 80ms linear;
+}
+.cardCta:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+.cardCta:disabled { opacity: 0.5; cursor: not-allowed; }
+.headerTop {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 0;
+}
+.headerActions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.headerTitle {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+.headerCount {
+  color: var(--fg-soft);
+  font-size: 12px;
+}
+
+.addForm {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.addInput {
+  flex: 1;
+  padding: 10px 2px;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-bottom-color 80ms linear;
+}
+.addInput:focus { border-bottom-color: var(--gold); }
+.addBtn {
+  padding: 8px 18px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg);
+  font-size: 12px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: border-color 80ms linear, color 80ms linear;
+}
+.addBtn:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+.addBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.addBtnFull { display: inline; }
+.addBtnShort { display: none; }
+
+/* Mobile: collapse "Import OPML" / "Export OPML" labels to arrow
+   glyphs (↑ / ↓) so the header doesn't break onto two lines when
+   the title + show count are already there. */
+@media (max-width: 640px) {
+  .wrap { padding: 0; }
+  .header { padding: 22px 16px 14px; gap: 8px; }
+  .headerTop { flex-wrap: wrap; gap: 8px; row-gap: 4px; }
+  .headerTitle { font-size: 24px; }
+  .headerActions { margin-left: auto; gap: 6px; }
+  .addBtn {
+    min-width: 44px;
+    min-height: 36px;
+    padding: 6px 10px;
+    font-size: 16px;
+    line-height: 1;
+  }
+  .addBtnFull { display: none; }
+  .addBtnShort { display: inline; }
+  .body { padding: 18px 16px 100px; }
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 36px 80px;
+}
+.loading {
+  color: var(--fg-soft);
+  padding: 48px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.loadingSpinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--line-soft);
+  border-top-color: var(--fg);
+  border-radius: 50%;
+  animation: pv-spin 0.8s linear infinite;
+}
+@keyframes pv-spin {
+  to { transform: rotate(360deg); }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 28px 20px;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--fg);
+  font-family: var(--font-sans);
+}
+.coverWrap {
+  position: relative;
+  aspect-ratio: 1;
+  width: 100%;
+  background: var(--bg-soft, #1a1a1a);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 80ms linear;
+}
+.cardBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 11px;
+  background: var(--gold);
+  color: #000;
+  font-family: var(--font-mono, var(--font-sans));
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.card:hover .coverWrap { border-color: var(--gold); }
+.cover { width: 100%; height: 100%; object-fit: cover; display: block; }
+.coverFallback { color: var(--fg-soft); }
+.cardTitle {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cardAuthor {
+  font-size: 11px;
+  color: var(--fg-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

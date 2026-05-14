@@ -1,0 +1,576 @@
+/* v2 Search — page-style container, 44px h-1 title, hairline-
+   underline input, bordered-tab filter chips. Class names match
+   the existing JSX so this is a pure visual upgrade. */
+
+.wrap {
+  padding: 36px 48px 60px;
+  max-width: 1480px;
+  height: 100%;
+  overflow-y: auto;
+  color: var(--fg);
+  background: var(--bg);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  animation: fadeUp 280ms ease-out both;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  margin-bottom: 18px;
+}
+
+.titleRow { display: flex; align-items: baseline; gap: 14px; }
+.titleRow > span:first-child { display: none; }
+.title {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  margin: 0;
+  color: var(--fg);
+}
+
+/* Hairline-underline input with leading magnifier (already in JSX). */
+.searchInput {
+  width: 100%;
+  max-width: none;
+  padding: 12px 2px;
+  background: transparent;
+  color: var(--fg);
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  font-size: 16px;
+  font-family: var(--font-sans);
+  outline: none;
+  margin-top: 14px;
+  transition: border-color 120ms linear;
+}
+.searchInput::placeholder { color: var(--fg-mute); }
+.searchInput:focus { border-bottom-color: var(--gold); }
+
+/* Filter tabs — hairline-underline pivot. Active row borrows the
+   gold accent rather than a pill background, matching the bundle. */
+.chips {
+  display: flex;
+  gap: 28px;
+  flex-wrap: nowrap;
+  border-bottom: 1px solid var(--line-soft);
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+.chip {
+  background: transparent;
+  color: var(--fg-soft);
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 12px 0;
+  font-size: 13.5px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  margin-bottom: -1px;
+  transition: color 120ms linear, border-color 120ms linear;
+}
+.chip:hover { color: var(--fg); }
+.chipActive {
+  color: var(--fg);
+  font-weight: 600;
+  border-bottom-color: var(--gold);
+}
+.chipActive:hover { color: var(--fg); }
+
+.empty {
+  text-align: center;
+  padding: 80px 36px;
+  color: var(--fg-soft);
+  font-size: 13px;
+}
+.emptyIcon { display: none; }
+
+/* Recents block */
+.recentBox { padding: 18px 36px 0; }
+.recentTitle {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--fg-mute);
+  margin: 0 0 8px;
+  font-weight: 400;
+}
+.recentRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line-soft);
+  cursor: pointer;
+  transition: background 80ms linear;
+}
+.recentRow:hover { background: var(--bg-raised); margin: 0 -36px; padding: 8px 36px; border-bottom-color: var(--line-soft); }
+.recentIcon { color: var(--fg-mute); font-size: 11px; }
+.recentText { flex: 1; color: var(--fg); }
+.recentClear {
+  background: transparent;
+  color: var(--fg-soft);
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 4px;
+  font-family: var(--font-sans);
+  transition: color 80ms linear;
+}
+.recentClear:hover { color: var(--fg); }
+
+/* ── Empty state (design v2) ──────────────────────────────────── */
+.emptyState {
+  display: grid;
+  gap: 36px;
+  padding: 8px 36px 36px;
+}
+.emptySection { min-width: 0; }
+.emptySectionLabel {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+.emptySectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.emptySectionTitleGroup {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.emptySectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--fg);
+  letter-spacing: -0.005em;
+}
+.emptySectionTag {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-weight: 500;
+}
+.emptyActionLink {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-weight: 500;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  transition: color 80ms linear;
+}
+.emptyActionLink:hover { color: var(--fg); }
+.emptyHint {
+  font-size: 13px;
+  color: var(--fg-soft);
+  line-height: 1.55;
+  padding: 4px 0;
+}
+
+/* Recent searches as chips */
+.recentChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.recentChip {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  background: transparent;
+  transition: border-color 80ms linear;
+}
+.recentChip:hover { border-color: var(--fg-mute); }
+.recentChipText {
+  background: none;
+  border: 0;
+  padding: 6px 10px 6px 12px;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  cursor: pointer;
+}
+.recentChipClear {
+  background: none;
+  border: 0;
+  border-left: 1px solid var(--line);
+  padding: 0 8px;
+  color: var(--fg-soft);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 80ms linear;
+}
+.recentChipClear:hover { color: var(--fg); }
+
+/* Searching · N addons list */
+.addonList { display: flex; flex-direction: column; }
+.addonRow {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 7px 4px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.addonDot {
+  width: 5px;
+  height: 5px;
+  background: var(--fg-soft);
+  border-radius: 50%;
+  margin-left: 2px;
+}
+.addonName {
+  font-size: 13px;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.addonCaps {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--fg-mute);
+  text-transform: uppercase;
+}
+
+/* Result sections — bundle's bordered SectionHead shape: h-4 title +
+   small mono count, hairline separator below. */
+.section { margin-top: 32px; }
+.sectionHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 0 0 8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.section:first-of-type .sectionHeader { }
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.005em;
+  color: var(--fg);
+}
+.sectionCount {
+  color: var(--fg-mute);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* ── Song rows ───────────────────────────────────────────────── */
+
+.songsList { display: flex; flex-direction: column; }
+
+/* Wrapper that hosts a song row + its inline source-picker panel.
+   The panel renders directly beneath when the row is expanded. */
+.songRowWrap { display: flex; flex-direction: column; }
+.songRowExpanded { background: var(--bg-raised); }
+
+/* Sources toggle — small chip on the trailing slot. Click expands
+   the inline source picker. Visual: hairline border, gold accent
+   when active. */
+.sourcesBtn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  padding: 4px 9px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: border-color 80ms linear, color 80ms linear;
+}
+.sourcesBtn:hover { border-color: var(--fg-mute); }
+.sourcesBtnActive { border-color: var(--gold); color: var(--gold); }
+.songRow {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1.8fr) minmax(0, 1.4fr) 60px;
+  gap: 16px;
+  padding: 9px 8px;
+  align-items: center;
+  cursor: pointer;
+  border-bottom: 1px solid var(--line-soft);
+  transition: background 120ms linear;
+}
+.songRow:hover { background: var(--bg-raised); }
+.songCover {
+  width: 44px; height: 44px;
+  object-fit: cover;
+  background: var(--bg-card);
+}
+.songCoverFallback {
+  width: 44px; height: 44px;
+  background: var(--bg-card);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--fg-mute);
+  font-size: 12px;
+}
+.cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.songTitle { font-weight: 600; color: var(--fg); letter-spacing: -0.005em; font-size: 14px; }
+.songArtist { color: var(--fg-soft); font-size: 12.5px; }
+
+/* Trailing slot — saved indicator or stream-save affordance */
+.savedBadgeSlot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 60px;
+}
+.savedBadge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 400;
+  white-space: nowrap;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  letter-spacing: 0.04em;
+}
+.savedBadge::before {
+  content: '✓';
+  margin-right: 4px;
+  font-size: 11px;
+}
+
+/* Default-source mode: explicit "+" save button on each unsaved row. */
+.savePlusBtn {
+  background: transparent;
+  color: var(--fg-soft);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+.savePlusBtn:hover:not(:disabled) {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+.savePlusBtn:disabled { opacity: 0.5; cursor: default; }
+
+/* ── Artists grid (flat, square, no gradients) ───────────────── */
+
+.artistsRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 28px;
+  padding: 0 36px;
+}
+.artistCard {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+.artistAvatar {
+  width: 100px; height: 100px;
+  border-radius: 0;
+  background: var(--bg-card);
+  color: var(--fg-soft);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; font-weight: 700;
+  overflow: hidden;
+  box-shadow: none;
+  letter-spacing: -0.025em;
+}
+.artistAvatar img { width: 100%; height: 100%; object-fit: cover; }
+.artistName {
+  font-weight: 700;
+  font-size: 13px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.005em;
+  color: var(--fg);
+}
+
+/* ── Audiobooks grid (square posters, no shadow) ─────────────── */
+
+.booksGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 28px;
+  padding: 0 36px;
+}
+.bookCard {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bookCover {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 0;
+  overflow: hidden;
+  background: repeating-linear-gradient(45deg, var(--bg-card), var(--bg-card) 6px, var(--bg-raised) 6px, var(--bg-raised) 12px);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  color: var(--fg-mute);
+  box-shadow: none;
+  position: relative;
+}
+.bookCover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bookSavedOverlay {
+  position: absolute;
+  top: 6px; right: 6px;
+  background: var(--bg);
+  color: var(--gold);
+  border-radius: 0;
+  border: 1px solid var(--gold);
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+.bookTitle {
+  font-weight: 700;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.005em;
+  color: var(--fg);
+}
+.bookAuthor {
+  font-size: 11px;
+  color: var(--fg-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Streaming subsection separators */
+.sectionSub {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--fg-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  margin: 0;
+  padding: 24px 36px 10px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-top: 1px solid var(--line);
+}
+.sectionSub::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  /* Reset the desktop 48px page padding — every section below
+     applies its own 16px gutter, so without this override the
+     visible content was only ~294px wide on a 390px iPhone. */
+  .wrap { padding: 0 0 80px; max-width: none; }
+  .header { padding: 22px 16px 0; }
+  .title { font-size: 22px; }
+  .searchInput {
+    margin-top: 12px;
+    /* Bump font-size to 16px so iOS Safari doesn't zoom on focus. */
+    font-size: 16px;
+  }
+  .chips {
+    gap: 22px;
+    margin-top: 12px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  .chips::-webkit-scrollbar { display: none; }
+  .recentBox { padding: 14px 16px 0; }
+  .recentRow:hover { margin: 0 -16px; padding: 8px 16px; }
+  .sectionHeader { padding: 18px 16px 8px; }
+  .songRow {
+    /* Wider title column (more left-bias) + larger gap so the
+       title text doesn't crash into the album thumb. Was 14px gap
+       which left ~6-8px after antialiasing — looked smushed. */
+    grid-template-columns: 44px minmax(0, 2.4fr) minmax(0, 1fr) 50px;
+    gap: 18px;
+    padding: 10px 16px;
+  }
+  .artistsRow,
+  .booksGrid {
+    padding: 0 16px;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 22px;
+  }
+  .artistAvatar { width: 84px; height: 84px; font-size: 28px; }
+  .sectionSub { padding: 18px 16px 8px; }
+  .empty { padding: 60px 16px; }
+  /* Bump tap targets to 44px on touch screens. */
+  .savePlusBtn { width: 44px; height: 44px; font-size: 20px; }
+  .sourcesBtn { min-height: 44px; padding: 10px 14px; }
+}
+
+/* "See all" footer that appears under each section in the All filter
+   when results are capped. Click flips the filter chip to that
+   section so the user gets the un-capped view without leaving the
+   page. Brutalist treatment matches the rest — uppercase letterspaced,
+   accent on hover. */
+.seeMore {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--line-soft);
+  padding: 12px 36px;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-soft);
+  text-align: left;
+  cursor: pointer;
+  transition: color 80ms linear;
+}
+.seeMore:hover { color: var(--gold); }

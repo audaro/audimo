@@ -1,0 +1,292 @@
+.root {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 100;
+  font-family: var(--font-sans);
+  color: var(--fg);
+  font-size: 13px;
+}
+
+.card {
+  width: 100%;
+  max-width: 580px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+
+.steps {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.stepDot {
+  width: 28px;
+  height: 1px;
+  border-radius: 0;
+  background: var(--line);
+  transition: background 80ms linear;
+}
+
+.stepDot.active {
+  background: var(--gold);
+  height: 2px;
+}
+
+.h1 {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--fg);
+  margin: 0;
+}
+
+.lede {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--fg);
+  margin: 0;
+}
+
+.muted {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--fg-soft);
+  margin: 0;
+}
+
+.muted a {
+  color: var(--gold);
+  text-decoration: none;
+  border-bottom: 1px solid var(--gold);
+  transition: opacity 80ms linear;
+}
+
+.muted a:hover { opacity: 0.75; }
+
+.error {
+  background: transparent;
+  border: 1px solid var(--red);
+  color: var(--red);
+  padding: 10px 12px;
+  border-radius: 0;
+  font-size: 12px;
+}
+
+.netHint {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--fg);
+}
+
+.netHint code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 1px 5px;
+  border-radius: 0;
+  color: var(--fg);
+}
+
+.kvBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 0;
+}
+
+.kv {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kv label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--fg-mute);
+}
+
+.kvRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.code {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 8px 10px;
+  word-break: break-all;
+  color: var(--fg);
+}
+
+.copyBtn {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--fg);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: color 80ms linear, border-color 80ms linear;
+}
+
+.copyBtn:hover { background: transparent; color: var(--gold); border-color: var(--gold); }
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 22px;
+  margin-top: 8px;
+  align-items: center;
+}
+
+.primary {
+  background: var(--fg);
+  color: var(--bg);
+  border: 1px solid var(--fg);
+  border-radius: 0;
+  padding: 10px 22px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: opacity 80ms linear;
+}
+
+.primary:hover { filter: none; opacity: 0.85; }
+
+.primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.secondary {
+  background: transparent;
+  color: var(--fg-soft);
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: color 80ms linear;
+}
+
+.secondary:hover { background: transparent; color: var(--fg); }
+
+.secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.qrBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px;
+  background: var(--fg);
+  border-radius: 0;
+  align-self: center;
+}
+
+.qr {
+  display: block;
+  width: 220px;
+  height: 220px;
+}
+
+.qrMeta {
+  font-size: 11px;
+  color: var(--bg);
+  font-family: var(--font-mono);
+}
+
+.linkBtn {
+  background: none;
+  border: none;
+  color: var(--gold);
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  border-bottom: 1px solid var(--gold);
+  transition: opacity 80ms linear;
+}
+.linkBtn:hover { opacity: 0.75; }
+
+.manualPair {
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.manualPair > summary {
+  cursor: pointer;
+  color: var(--fg-soft);
+  margin-bottom: 10px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.manualPair > summary:hover { color: var(--fg); }
+
+/* ── Mobile onboarding ────────────────────────────────────────
+   Full-bleed card on phones — the desktop 580px max-width wastes
+   most of the screen, and the QR / pair code is the focal point
+   that should be as large as it can comfortably be. We drop the
+   card border + box-shadow because they look fussy at full-width,
+   and shrink the inner padding so the QR has room to be 280px+. */
+@media (max-width: 640px) {
+  .root {
+    padding: 0;
+    align-items: stretch;
+  }
+  .card {
+    max-width: none;
+    min-height: 100dvh;
+    border: 0;
+    box-shadow: none;
+    padding: calc(28px + env(safe-area-inset-top, 0px)) 22px calc(28px + env(safe-area-inset-bottom, 0px));
+    gap: 16px;
+    justify-content: flex-start;
+  }
+  .h1 { font-size: 24px; }
+  .lede { font-size: 15px; }
+  .qrBlock { padding: 16px; align-self: center; }
+  .qr { width: 240px; height: 240px; }
+  .kvRow { flex-direction: column; align-items: stretch; gap: 8px; }
+  .code { word-break: break-all; font-size: 13px; padding: 12px; }
+  .copyBtn { min-height: 44px; padding: 10px 14px; }
+  .actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 12px;
+    margin-top: 18px;
+  }
+  .primary { padding: 14px; min-height: 48px; font-size: 13px; }
+  .secondary { padding: 12px; min-height: 44px; font-size: 13px; }
+}

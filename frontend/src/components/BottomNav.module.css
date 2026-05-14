@@ -1,0 +1,64 @@
+/* v2 mobile tab bar — sits at the bottom of the mobile shell below
+   the mini-player. Backdrop-blurred deep bg so content scrolling
+   underneath stays visible but desaturated. 28px bottom padding
+   clears the iOS home indicator on safe-area devices. */
+
+.nav {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .nav {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    /* Pinned to the absolute bottom of the viewport so the blurred
+       background paints flush through the home-indicator zone.
+       Previous attempts used flex-flow + negative margin, but
+       .layout's `overflow: hidden` clipped the overflow back off.
+       Fixed positioning bypasses that entirely. .layout's
+       padding-bottom reserves space so the mini-player above isn't
+       hidden behind this. */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    /* Bottom padding = the iOS home-indicator safe-area only, no
+       extra buffer. Lower values risk taps under the home-indicator
+       gesture being eaten by iOS, but with env() alone the icons
+       sit right at the edge of the gesture zone — visually flush,
+       still tappable. On home-button iPhones / Android (safe-area
+       returns 0) we fall back to 6px so icons aren't squashed
+       against the screen edge. */
+    padding: 6px 0 max(6px, env(safe-area-inset-bottom, 6px));
+    background: oklch(0.124 0.006 60 / 0.95);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-top: 1px solid var(--line-soft);
+  }
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+  background: transparent;
+  border: 0;
+  color: var(--fg-soft);
+  cursor: pointer;
+  transition: color 120ms linear;
+  font-family: var(--font-sans);
+}
+.item:hover { color: var(--fg); }
+.item.active { color: var(--gold); }
+
+.label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+.item.active .label { font-weight: 600; }

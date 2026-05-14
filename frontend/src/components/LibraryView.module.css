@@ -1,0 +1,793 @@
+.wrap {
+  padding: 0 0 96px;
+  height: 100%;
+  overflow-y: auto;
+  color: var(--fg);
+  background: var(--bg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+/* ── Header (title row + filter input + Songs/Albums/Artists tabs) ── */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 32px 36px 24px;
+}
+.titleRow > span:first-child { display: none; } /* hide leading emoji */
+.title {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.025em;
+  color: var(--fg);
+}
+
+/* Filter input — hairline underline, no box */
+.searchInput {
+  margin: 0 36px 8px;
+  padding: 10px 2px;
+  background: transparent;
+  color: var(--fg);
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  outline: none;
+  width: calc(100% - 72px);
+  max-width: none;
+}
+.searchInput::placeholder { color: var(--fg-soft); }
+.searchInput:focus { border-bottom-color: var(--line); }
+
+/* Songs / Albums / Artists pivot */
+.tabs {
+  display: flex;
+  gap: 28px;
+  padding: 0 36px;
+  border-bottom: 1px solid var(--line);
+  margin-top: 16px;
+}
+.tab {
+  background: transparent;
+  color: var(--fg-soft);
+  border: none;
+  border-bottom: 1px solid transparent;
+  padding: 12px 0;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  position: relative;
+  font-family: var(--font-sans);
+  margin-bottom: -1px;
+  letter-spacing: -0.005em;
+}
+.tab:hover { color: var(--fg); }
+.tabActive {
+  color: var(--fg);
+  font-weight: 700;
+  border-bottom-color: var(--gold);
+}
+
+.sortSelect {
+  margin-left: auto;
+  align-self: center;
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--line);
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+.sortSelect:focus { outline: none; }
+
+/* ── Empty / loading state ── */
+.empty {
+  text-align: center;
+  color: var(--fg-soft);
+  padding: 80px 36px;
+  font-size: 13px;
+}
+.empty p { margin: 6px 0; }
+.emptyIcon { font-size: 28px; opacity: 0.4; margin-bottom: 16px; color: var(--fg-mute); }
+.spinner {
+  width: 24px; height: 24px;
+  border: 1px solid var(--line);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  animation: lvSpin 800ms linear infinite;
+}
+@keyframes lvSpin { to { transform: rotate(360deg); } }
+
+/* Breadcrumb (drilldown header) — hairline link trail. The first
+   crumb is "← library", followed by /-separated parents. The last
+   crumb is the current page (non-clickable, fg color). */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 48px 0;
+  font-size: 12px;
+  color: var(--fg-soft);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.crumb {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--fg-soft);
+  cursor: pointer;
+  transition: color 80ms linear;
+  letter-spacing: -0.005em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.crumb:hover { color: var(--fg); }
+.crumbSep { color: var(--fg-mute); flex-shrink: 0; }
+.crumbCurrent {
+  color: var(--fg);
+  font-size: 11px;
+  letter-spacing: -0.005em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Clickable accent artist link in album-detail meta line. */
+.detailArtistLink {
+  color: var(--gold);
+  cursor: pointer;
+  transition: opacity 80ms linear;
+}
+.detailArtistLink:hover { opacity: 0.75; }
+
+/* Primary action variant (▶ play album) — bold fg, no border. */
+.actionBtnPrimary {
+  color: var(--fg) !important;
+  font-weight: 700 !important;
+}
+.actionBtnPrimary:hover { color: var(--gold) !important; }
+
+/* Back button (drilldowns) */
+.backBtn {
+  background: transparent;
+  border: none;
+  color: var(--fg-soft);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 14px 36px;
+  font-family: var(--font-sans);
+  margin-bottom: 0;
+  display: block;
+  transition: color 80ms linear;
+}
+.backBtn:hover { color: var(--fg); }
+
+/* ── Songs (dense table) ─────────────────────────────────────── */
+
+.songs {
+  display: flex;
+  flex-direction: column;
+}
+.songsHeader {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1.8fr) minmax(0, 1.2fr) minmax(0, 1.4fr) 130px;
+  gap: 14px;
+  padding: 8px 36px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--fg-mute);
+  font-weight: 500;
+  border-bottom: 1px solid var(--line);
+}
+.songRow {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1.8fr) minmax(0, 1.2fr) minmax(0, 1.4fr) 130px;
+  gap: 14px;
+  padding: 9px 36px;
+  align-items: center;
+  cursor: pointer;
+  border-bottom: 1px solid var(--line-soft);
+  position: relative;
+  transition: background 120ms linear;
+  font-size: 14px;
+}
+.songRow:hover { background: var(--bg-raised); }
+.songRowActive { background: var(--bg-card); }
+.songRowActive:hover { background: var(--bg-hover); }
+.songRowActive .songTitle { color: var(--fg); }
+
+.coverSlot {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+.coverSlot .songCover,
+.coverSlot .songCoverFallback { display: block; }
+.playingMark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--gold);
+  background: oklch(0.124 0.006 60 / 0.6);
+  pointer-events: none;
+  z-index: 1;
+}
+.songCover {
+  width: 44px; height: 44px;
+  object-fit: cover;
+  background: var(--bg-card);
+}
+.songCoverFallback {
+  width: 44px; height: 44px;
+  background: var(--bg-card);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  color: var(--fg-mute);
+}
+.cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.songTitle { font-weight: 600; color: var(--fg); letter-spacing: -0.005em; font-size: 14px; }
+.songArtist { color: var(--fg-soft); font-size: 12.5px; }
+.songAlbum { color: var(--fg-soft); font-size: 12.5px; }
+
+/* Per-row actions revealed on row hover */
+.rowActions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 80ms linear;
+}
+.songRow:hover .rowActions { opacity: 1; }
+
+.iconBtn {
+  background: transparent;
+  border: none;
+  color: var(--fg-soft);
+  width: 24px; height: 24px;
+  border-radius: 0;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-sans);
+  padding: 0;
+  transition: color 80ms linear;
+}
+.iconBtn:hover {
+  background: transparent;
+  color: var(--fg);
+}
+.iconBtnDanger:hover {
+  color: var(--red);
+}
+
+/* Playlist add-to popover */
+.plMenuWrap { position: relative; display: inline-flex; }
+.plMenu {
+  position: absolute;
+  top: 28px;
+  right: 0;
+  min-width: 220px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  padding: 4px 0;
+  z-index: 30;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.plMenuItem {
+  padding: 8px 14px;
+  border-radius: 0;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 80ms linear;
+}
+.plMenuItem:hover { background: var(--bg-raised); }
+.plMenuDivider { height: 1px; background: var(--line); margin: 4px 0; }
+.plMenuNew { display: flex; gap: 6px; padding: 6px 10px 8px; }
+.plMenuInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  color: var(--fg);
+  border-radius: 0;
+  padding: 6px 0;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  min-width: 0;
+  outline: none;
+}
+.plMenuInput:focus { border-bottom-color: var(--line); }
+.plMenuCreate {
+  background: transparent;
+  color: var(--fg);
+  border: none;
+  padding: 0 4px;
+  border-radius: 0;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  letter-spacing: -0.005em;
+  transition: color 80ms linear;
+}
+.plMenuCreate:hover { color: var(--gold); }
+.plMenuCreate:disabled { opacity: 0.35; cursor: default; }
+
+/* Hero action row — Play / Shuffle / Like / More.
+   Pill-shaped buttons, Play primary (filled accent). */
+.detailActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 0;
+  flex-wrap: wrap;
+}
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  padding: 9px 16px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 80ms linear, color 80ms linear, background 80ms linear;
+}
+.actionBtn:hover { border-color: var(--fg-mute); color: var(--fg); }
+.actionBtnPrimary {
+  background: var(--gold) !important;
+  color: var(--bg) !important;
+  border-color: var(--gold) !important;
+  font-weight: 600;
+}
+.actionBtnPrimary:hover {
+  background: var(--gold-dim) !important;
+  border-color: var(--gold-dim) !important;
+  color: var(--bg) !important;
+}
+.actionBtnDanger { color: var(--fg-soft); }
+.actionBtnDanger:hover { border-color: var(--red); color: var(--red); }
+
+/* Confirm-delete dialog (legacy — global ConfirmModal handles this now) */
+.confirmOverlay {
+  position: fixed; inset: 0;
+  background: rgba(10, 8, 6, 0.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+}
+.confirmDialog {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 28px 32px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+.confirmTitle {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--fg);
+  letter-spacing: -0.015em;
+}
+.confirmBody { font-size: 13px; color: var(--fg-soft); line-height: 1.5; margin-bottom: 18px; }
+.confirmActions { display: flex; justify-content: flex-end; gap: 22px; }
+
+/* Undo banner */
+.undoBanner {
+  position: fixed;
+  bottom: calc(var(--player-h) + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 10px 14px 10px 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 90;
+  font-size: 12px;
+  color: var(--fg);
+  max-width: 90vw;
+}
+.undoText { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.undoBtn {
+  background: transparent;
+  color: var(--gold);
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+}
+
+/* ── Albums grid (flat, square) ──────────────────────────────── */
+
+/* v2 albums grid — 5-column on wide displays, art-led with title +
+   meta below. The `.art` style mirrors the global utility class so
+   placeholder covers match the rest of the app. */
+.albumsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 22px;
+  padding: 18px 36px 0;
+}
+.albumCard {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.albumCoverBox {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background-image: repeating-linear-gradient(135deg, oklch(0.20 0.01 70) 0 6px, oklch(0.18 0.01 70) 6px 12px);
+  background-color: oklch(0.18 0.01 70);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: oklch(0.50 0.05 70);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.04);
+  transition: opacity 120ms ease;
+}
+.albumCard:hover .albumCoverBox { opacity: 0.85; }
+.albumCoverBox img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.albumName {
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.005em;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.albumMeta {
+  font-size: 12.5px;
+  color: var(--fg-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* v2 artists grid — circular-ish square tiles, centered text below. */
+
+.artistsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 22px;
+  padding: 18px 36px 0;
+}
+.artistCard {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  min-width: 0;
+}
+.artistAvatar {
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 140px;
+  background: var(--bg-card);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-sans);
+  font-size: 36px; font-weight: 700;
+  color: var(--fg-mute);
+  transition: opacity 120ms ease;
+  letter-spacing: -0.025em;
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.04);
+}
+.artistCard:hover .artistAvatar { opacity: 0.85; }
+.artistAvatarSmall { width: 44px; height: 44px; font-size: 16px; aspect-ratio: 1; max-width: none; }
+.artistName {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--fg);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.005em;
+}
+.artistMeta {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+/* ── Drilldown headers ───────────────────────────────────────── */
+
+/* ── Album / Artist hero (design v2) ── */
+.detailHeader {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 30px;
+  align-items: flex-end;
+  padding: 24px 48px 30px;
+  margin-bottom: 0;
+  max-width: 1480px;
+  box-sizing: border-box;
+}
+.detailCover {
+  width: 260px; height: 260px;
+  overflow: hidden;
+  background-image: repeating-linear-gradient(135deg, oklch(0.20 0.01 70) 0 6px, oklch(0.18 0.01 70) 6px 12px);
+  background-color: oklch(0.18 0.01 70);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  flex-shrink: 0;
+  box-shadow: 0 20px 40px oklch(0 0 0 / 0.55), inset 0 0 0 1px oklch(1 0 0 / 0.04);
+  color: oklch(0.50 0.05 70);
+}
+.detailCover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.detailHeaderArtist {
+  width: 260px; height: 260px;
+  overflow: hidden;
+  background: var(--bg-card);
+  color: var(--fg-mute);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-sans);
+  font-size: 72px; font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 20px 40px oklch(0 0 0 / 0.55), inset 0 0 0 1px oklch(1 0 0 / 0.04);
+  letter-spacing: -0.025em;
+}
+.detailKind {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--fg-mute);
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+.detailTitle {
+  font-size: 56px;
+  font-weight: 800;
+  margin: 0 0 8px;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  color: var(--fg);
+}
+.detailMeta {
+  color: var(--fg-soft);
+  font-size: 16px;
+  margin-bottom: 14px;
+}
+.detailMetaSub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--fg-mute);
+  padding: 28px 48px 10px;
+  font-weight: 500;
+}
+
+/* ── Mobile ──────────────────────────────────────────────────────
+   Tighten gutters to 16px and drop the album/artist drilldown header
+   to a stacked layout so the title/meta column doesn't squeeze under
+   the 180px cover. */
+@media (max-width: 640px) {
+  .titleRow { padding: 22px 16px 16px; }
+  .title { font-size: 22px; }
+  .searchInput { margin: 0 16px 4px; width: calc(100% - 32px); }
+  .tabs { padding: 0 16px; gap: 22px; }
+
+  .breadcrumb { padding: 12px 16px; gap: 8px; }
+  .songsHeader,
+  .songRow {
+    padding: 10px 16px;
+    /* Stacked layout: cover | (title above artist) | actions. The
+       earlier side-by-side title+artist split on a 393px phone gave
+       each text column ~50px — long titles like "Bullet With
+       Butterfly Wings" and artists like "The Smashing Pumpkins" got
+       brutally truncated. Stacking gives both fields the full
+       remaining row width, and the title is allowed to wrap to a
+       second line so really long names render in full. */
+    gap: 14px;
+    grid-template-columns: 44px minmax(0, 1fr) 112px;
+    grid-template-rows: auto auto;
+    align-items: center;
+  }
+  /* Cover spans both rows so it stays a fixed square next to the
+     stacked text. */
+  .songRow > :nth-child(1) { grid-column: 1; grid-row: 1 / 3; }
+  /* Title: top row of the text column, allowed to wrap to 2 lines. */
+  .songRow > :nth-child(2) {
+    grid-column: 2;
+    grid-row: 1;
+    white-space: normal;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.2;
+  }
+  /* Artist: bottom row of the text column, single-line ellipsis. */
+  .songRow > :nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  /* Album column hidden on mobile (already truncated to "—" anyway). */
+  .songRow > :nth-child(4),
+  .songsHeader > :nth-child(4) { display: none; }
+  /* Actions span both rows on the right, vertically centered. */
+  .songRow > :nth-child(5),
+  .songsHeader > :nth-child(5) {
+    grid-column: 3;
+    grid-row: 1 / 3;
+    align-self: center;
+  }
+  /* The header row keeps a single-row simple layout — collapse all
+     of its text labels into one row with the actions slot. */
+  .songsHeader { grid-template-rows: auto; }
+  .songsHeader > :nth-child(2) { grid-row: 1; }
+  .songsHeader > :nth-child(3) { display: none; }
+  /* Prevent action-button overflow from bleeding into the text
+     column. */
+  .rowActions { overflow: hidden; min-width: 0; }
+
+  .albumsGrid,
+  .artistsGrid {
+    padding: 18px 16px 0;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 18px;
+  }
+
+  /* Detail (album / artist) hero — collapse the 260px+1fr two-
+     column desktop grid into a single column. The previous mobile
+     rule set `flex-direction: column` which CSS silently ignored
+     because the container is `display: grid`. That left the
+     260px cover sitting next to a smushed meta column on a 390px
+     phone — the visible 'broken' state the user reported. */
+  .detailHeader {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px 16px 22px;
+  }
+  .detailCover,
+  .detailHeaderArtist { width: 160px; height: 160px; align-self: flex-start; font-size: 36px; }
+  .detailTitle { font-size: 24px; }
+  .detailActions {
+    gap: 10px;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  /* Action buttons get bigger tap targets + wrap to multiple rows
+     rather than getting squashed into one. */
+  .actionBtn { min-height: 40px; padding: 8px 14px; font-size: 13px; }
+  .sectionTitle { padding: 22px 16px 8px; }
+  .empty { padding: 60px 16px; }
+
+  /* Add-to-playlist mobile sheet — replaces the desktop popover
+     anchored to the row's `+` button. The popover overflowed the
+     row and was unreachable for thumbs; the sheet gives the same
+     pick-and-create flow with full-width tap targets. */
+  .plSheetList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .plSheetRow {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 14px;
+    align-items: center;
+    width: 100%;
+    background: transparent;
+    border: 0;
+    border-top: 1px solid var(--line-soft);
+    padding: 16px 22px;
+    min-height: 56px;
+    color: var(--fg);
+    font: inherit;
+    font-size: 15px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .plSheetRow:active { background: var(--bg-raised); }
+  .plSheetEmpty {
+    padding: 22px;
+    text-align: center;
+    color: var(--fg-soft);
+    font-size: 13px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .plSheetFooter {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+    padding: 14px 22px 18px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .plSheetInput {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-raised);
+    border: 1px solid var(--line);
+    color: var(--fg);
+    padding: 12px 14px;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    outline: none;
+    border-radius: 4px;
+  }
+  .plSheetInput:focus { border-color: var(--gold); }
+  .plSheetCreate {
+    background: var(--fg);
+    color: var(--bg);
+    border: none;
+    padding: 0 16px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 4px;
+    min-height: 44px;
+    white-space: nowrap;
+  }
+  .plSheetCreate:disabled { opacity: 0.4; cursor: default; }
+}
