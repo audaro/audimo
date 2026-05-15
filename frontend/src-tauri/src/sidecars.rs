@@ -244,15 +244,24 @@ fn resolve_python(dir: &PathBuf) -> String {
     if let Ok(p) = std::env::var("AUDIMO_PYTHON") {
         return p;
     }
-    let venv = dir.join("venv/bin/python");
-    if venv.is_file() {
-        return venv.to_string_lossy().into_owned();
+    // venv layout differs by platform: POSIX uses bin/python, Windows
+    // uses Scripts\python.exe.
+    #[cfg(windows)]
+    let candidates = [
+        dir.join("venv").join("Scripts").join("python.exe"),
+        dir.join(".venv").join("Scripts").join("python.exe"),
+    ];
+    #[cfg(not(windows))]
+    let candidates = [
+        dir.join("venv").join("bin").join("python"),
+        dir.join(".venv").join("bin").join("python"),
+    ];
+    for c in &candidates {
+        if c.is_file() {
+            return c.to_string_lossy().into_owned();
+        }
     }
-    let dot_venv = dir.join(".venv/bin/python");
-    if dot_venv.is_file() {
-        return dot_venv.to_string_lossy().into_owned();
-    }
-    "python3".into()
+    if cfg!(windows) { "python".into() } else { "python3".into() }
 }
 
 /// Spawn the backend sidecar.
@@ -296,7 +305,7 @@ pub fn spawn_backend(
     // Production path: PyInstaller binary placed next to the Tauri exe.
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
-            let bundled = dir.join("audimo-backend");
+            let bundled = dir.join(if cfg!(windows) { "audimo-backend.exe" } else { "audimo-backend" });
             if bundled.is_file() {
                 log::info!("spawning bundled backend: {:?} (remote={})", bundled, remote_enabled);
                 let mut cmd = Command::new(&bundled);
@@ -460,7 +469,7 @@ pub fn spawn_streaming(repo_root: &PathBuf) -> Option<Child> {
 
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
-            let bundled = dir.join("audimo-streaming");
+            let bundled = dir.join(if cfg!(windows) { "audimo-streaming.exe" } else { "audimo-streaming" });
             if bundled.is_file() {
                 log::info!("spawning bundled streaming: {:?}", bundled);
                 let mut cmd = Command::new(&bundled);
@@ -481,14 +490,21 @@ pub fn spawn_streaming(repo_root: &PathBuf) -> Option<Child> {
         }
     }
 
-    let script = repo_root.join("streaming_server/run_native.sh");
+    let streaming_dir = repo_root.join("streaming_server");
+    #[cfg(windows)]
+    let (program, script_name): (&str, &str) = ("powershell", "run_native.ps1");
+    #[cfg(not(windows))]
+    let (program, script_name): (&str, &str) = ("bash", "run_native.sh");
+    let script = streaming_dir.join(script_name);
     if !script.is_file() {
         log::warn!("streaming launcher not found at {:?}", script);
         return None;
     }
     log::info!("spawning streaming (dev): {:?}", script);
-    let mut cmd = Command::new("bash");
-    cmd.arg(script).current_dir(repo_root.join("streaming_server"));
+    let mut cmd = Command::new(program);
+    #[cfg(windows)]
+    cmd.args(["-NoProfile", "-ExecutionPolicy", "Bypass", "-File"]);
+    cmd.arg(&script).current_dir(&streaming_dir);
     for (k, v) in mk_envs() { cmd.env(k, v); }
     let child_opt = cmd
         .stdout(Stdio::inherit())

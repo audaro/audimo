@@ -5,6 +5,8 @@ the frontend uses on boot. Admin config is a back-compat shim now that
 upstream-service URLs moved into per-addon settings.
 """
 import os
+import shutil
+import sys
 from pathlib import Path
 
 from fastapi import APIRouter, Depends
@@ -87,6 +89,22 @@ async def boot_status(current_user: dict = Depends(get_current_user)):
     """
     from main import consume_crash_flag
     return {"previous_crashed": consume_crash_flag()}
+
+
+@router.get("/api/system/ffmpeg-status")
+async def ffmpeg_status():
+    """Report whether ffmpeg is on PATH so the UI can show a one-time
+    install hint. Unauthenticated: the answer is the same for every
+    caller, and gating it would make the first-launch banner harder
+    to wire (the probe runs before pairing). Returns the platform so
+    the banner can show the right install command (brew/winget/apt).
+    """
+    path = shutil.which("ffmpeg")
+    return {
+        "installed": path is not None,
+        "path": path,
+        "platform": sys.platform,  # "darwin" | "win32" | "linux"
+    }
 
 
 @router.get("/api/auth/settings")

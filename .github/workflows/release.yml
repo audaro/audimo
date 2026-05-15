@@ -1,10 +1,15 @@
 name: release
 
 # Builds Audimo.app, packages it as a DMG, and publishes a GitHub
-# Release. macOS arm64 only for now — Intel + Linux + Windows are
-# achievable but each needs its own libtorrent toolchain story
-# (see streaming_server/audimo_streaming.spec for the build-time
+# Release. macOS arm64 and Windows x86_64 are wired; Intel macOS and
+# Linux still need their own libtorrent toolchain story (see
+# streaming_server/audimo_streaming.spec for the build-time
 # PYTHONPATH dance) and aren't wired here yet.
+#
+# Windows note: the libtorrent pip wheel installs straight into the
+# venv, so no PYTHONPATH gymnastics — just `pip install libtorrent`.
+# If wheel availability lags the Python toolchain, pin setup-python
+# below to a cp version with a published wheel.
 #
 # Trigger:
 #   - Push a tag of the form `v0.4.0`
@@ -168,3 +173,130 @@ jobs:
           files: |
             ${{ steps.artifact.outputs.dmg }}
             ${{ steps.artifact.outputs.sha }}
+
+  windows-x86_64:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            REF="${GITHUB_REF#refs/tags/}"
+            VERSION="${REF#v}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "→ building Audimo $VERSION (windows)"
+
+      # ── Toolchains ──────────────────────────────────────────────
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      # Pin to a Python version with a published libtorrent wheel.
+      # As of writing, libtorrent ships cp311/cp312 wheels reliably;
+      # newer Python versions sometimes lag — bump only after
+      # confirming a matching wheel exists on PyPI.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: frontend/src-tauri
+
+      # ── Backend sidecar binary ──────────────────────────────────
+      - name: Build backend sidecar (PyInstaller)
+        working-directory: backend
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .\.venv\Scripts\python.exe -m pip install --upgrade pip
+          .\.venv\Scripts\python.exe -m pip install -r requirements.txt pyinstaller
+          .\.venv\Scripts\pyinstaller.exe audimo_backend.spec --clean --noconfirm
+          Get-ChildItem dist
+
+      # ── Streaming sidecar binary ────────────────────────────────
+      # No Homebrew on Windows — libtorrent installs straight from
+      # PyPI as a wheel. PyInstaller's collect_all('libtorrent') in
+      # audimo_streaming.spec then bundles the .pyd + DLLs.
+      - name: Build streaming sidecar (PyInstaller + libtorrent)
+        working-directory: streaming_server
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .\.venv\Scripts\python.exe -m pip install --upgrade pip
+          .\.venv\Scripts\python.exe -m pip install -r requirements.txt pyinstaller libtorrent
+          .\.venv\Scripts\pyinstaller.exe audimo_streaming.spec --clean --noconfirm
+          Get-ChildItem dist
+
+      # ── Stage sidecars where Tauri expects them ─────────────────
+      # Tauri's externalBin resolver appends the target triple + .exe,
+      # so the binaries must be named `<base>-<triple>.exe`.
+      - name: Stage sidecar binaries
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path frontend\src-tauri\binaries | Out-Null
+          Copy-Item backend\dist\audimo-backend.exe          frontend\src-tauri\binaries\audimo-backend-x86_64-pc-windows-msvc.exe
+          Copy-Item streaming_server\dist\audimo-streaming.exe frontend\src-tauri\binaries\audimo-streaming-x86_64-pc-windows-msvc.exe
+          Get-ChildItem frontend\src-tauri\binaries
+
+      # ── Tauri build ─────────────────────────────────────────────
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build Tauri app (produces .msi + .exe installer)
+        working-directory: frontend
+        run: npx tauri build
+
+      # ── Package + upload ────────────────────────────────────────
+      - name: Rename + checksum installers
+        id: artifact
+        shell: pwsh
+        run: |
+          $version = "${{ steps.meta.outputs.version }}"
+          $msiSrc = Get-ChildItem frontend\src-tauri\target\release\bundle\msi\Audimo_*_x64_en-US.msi | Select-Object -First 1
+          $nsisSrc = Get-ChildItem frontend\src-tauri\target\release\bundle\nsis\Audimo_*_x64-setup.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+          $msiOut = "Audimo_${version}_x64.msi"
+          Copy-Item $msiSrc.FullName $msiOut
+          (Get-FileHash $msiOut -Algorithm SHA256).Hash + "  " + $msiOut | Tee-Object -FilePath "$msiOut.sha256"
+          "msi=$msiOut"           | Out-File -Append -Encoding utf8 $env:GITHUB_OUTPUT
+          "msi_sha=$msiOut.sha256" | Out-File -Append -Encoding utf8 $env:GITHUB_OUTPUT
+          if ($nsisSrc) {
+            $nsisOut = "Audimo_${version}_x64-setup.exe"
+            Copy-Item $nsisSrc.FullName $nsisOut
+            (Get-FileHash $nsisOut -Algorithm SHA256).Hash + "  " + $nsisOut | Tee-Object -FilePath "$nsisOut.sha256"
+            "nsis=$nsisOut"            | Out-File -Append -Encoding utf8 $env:GITHUB_OUTPUT
+            "nsis_sha=$nsisOut.sha256" | Out-File -Append -Encoding utf8 $env:GITHUB_OUTPUT
+          }
+
+      # Upload as a workflow artifact (NOT a GitHub Release) so the
+      # MSI isn't publicly downloadable while we're still testing. Only
+      # accounts with repo access can fetch the artifact from the
+      # workflow run page; the file auto-expires after `retention-days`.
+      # Switch back to softprops/action-gh-release once we're ready
+      # to publish a public Windows build.
+      - name: Upload Windows installer (private workflow artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: audimo-windows-x64-${{ steps.meta.outputs.version }}
+          path: |
+            Audimo_${{ steps.meta.outputs.version }}_x64.msi
+            Audimo_${{ steps.meta.outputs.version }}_x64.msi.sha256
+            Audimo_${{ steps.meta.outputs.version }}_x64-setup.exe
+            Audimo_${{ steps.meta.outputs.version }}_x64-setup.exe.sha256
+          if-no-files-found: warn
+          retention-days: 30

@@ -580,19 +580,16 @@ pub fn uninstall_blocking(id: &str) -> Result<(), String> {
     if dir.exists() {
         fs::remove_dir_all(&dir).map_err(|e| format!("rm {dir:?}: {e}"))?;
     }
-    // PyInstaller single-file binaries extract to /tmp/_MEIxxxxxx on
+    // PyInstaller single-file binaries extract to a temp dir
+    // (`/tmp/_MEIxxxxxx` on POSIX, `%TEMP%\_MEIxxxxxx` on Windows) on
     // each launch. Killed processes don't run atexit cleanups, so these
     // accumulate. Sweep any leftover dirs on uninstall.
-    #[cfg(unix)]
-    {
-        let tmp = std::path::Path::new("/tmp");
-        if let Ok(entries) = fs::read_dir(tmp) {
-            for ent in entries.flatten() {
-                let name = ent.file_name();
-                let s = name.to_string_lossy();
-                if s.starts_with("_MEI") {
-                    let _ = fs::remove_dir_all(ent.path());
-                }
+    if let Ok(entries) = fs::read_dir(std::env::temp_dir()) {
+        for ent in entries.flatten() {
+            let name = ent.file_name();
+            let s = name.to_string_lossy();
+            if s.starts_with("_MEI") {
+                let _ = fs::remove_dir_all(ent.path());
             }
         }
     }

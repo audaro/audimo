@@ -24,6 +24,7 @@ import ConfirmModal from './components/ConfirmModal'
 import BottomNav from './components/BottomNav'
 import NowPlaying from './components/NowPlaying'
 import BundleInstallListener from './components/BundleInstallListener'
+import FfmpegBanner from './components/FfmpegBanner'
 import SettingsView from './components/SettingsView'
 import HistoryView from './components/HistoryView'
 import AddonsView from './components/AddonsView'
@@ -302,6 +303,7 @@ export default function App() {
     <div className={styles.layout}>
       <Sidebar />
       <main className={styles.main}>
+        <FfmpegBanner />
         <div style={{ display: activeView === 'home' ? 'contents' : 'none' }}><HomeView /></div>
         <div style={{ display: activeView === 'search' ? 'contents' : 'none' }}><SearchView /></div>
         <div style={{ display: activeView === 'queue' ? 'contents' : 'none' }}><QueueView /></div>

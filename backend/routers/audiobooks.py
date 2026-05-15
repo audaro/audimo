@@ -855,7 +855,7 @@ _AUDIOBOOK_BITRATE = "128k"
 
 
 def _ffmpeg_path() -> str:
-    return shutil.which("ffmpeg") or "/opt/homebrew/bin/ffmpeg"
+    return shutil.which("ffmpeg") or "ffmpeg"
 
 
 @router.api_route(
