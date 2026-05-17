@@ -283,6 +283,16 @@ jobs:
             "nsis_sha=$nsisOut.sha256" | Out-File -Append -Encoding utf8 $env:GITHUB_OUTPUT
           }
 
+      # Stage the purge scripts next to the installers so the artifact
+      # zip ships a one-click uninstaller. audimo-purge.bat self-elevates
+      # via UAC and runs audimo-purge.ps1 — the user just double-clicks
+      # the .bat from the extracted folder.
+      - name: Stage uninstall scripts
+        shell: pwsh
+        run: |
+          Copy-Item scripts\audimo-purge.ps1 .
+          Copy-Item scripts\audimo-purge.bat .
+
       # Upload as a workflow artifact (NOT a GitHub Release) so the
       # MSI isn't publicly downloadable while we're still testing. Only
       # accounts with repo access can fetch the artifact from the
@@ -298,5 +308,7 @@ jobs:
             Audimo_${{ steps.meta.outputs.version }}_x64.msi.sha256
             Audimo_${{ steps.meta.outputs.version }}_x64-setup.exe
             Audimo_${{ steps.meta.outputs.version }}_x64-setup.exe.sha256
+            audimo-purge.bat
+            audimo-purge.ps1
           if-no-files-found: warn
           retention-days: 30
