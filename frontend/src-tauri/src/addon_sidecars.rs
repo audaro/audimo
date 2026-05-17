@@ -44,6 +44,34 @@ fn no_console(cmd: &mut Command) {
 #[cfg(not(windows))]
 fn no_console(_cmd: &mut Command) {}
 
+/// Remove a directory tree, retrying on Windows when the OS hasn't
+/// yet released file handles from a freshly-killed process.
+///
+/// On Windows, `TerminateProcess` returns before all handles in the
+/// kernel are torn down — and antivirus scanners frequently re-open
+/// files between the kill and our `remove_dir_all`. The result is a
+/// race where uninstall fails with "Access is denied (os error 5)"
+/// even though we just killed everything. A short retry loop with
+/// backoff papers over the race window (~100–500ms in practice).
+/// POSIX doesn't have this problem; we still loop once for code
+/// symmetry but the first attempt always succeeds.
+fn remove_dir_all_with_retry(path: &Path) -> std::io::Result<()> {
+    let mut last_err: Option<std::io::Error> = None;
+    for delay_ms in [0u64, 100, 250, 500, 1000, 2000] {
+        if delay_ms > 0 {
+            std::thread::sleep(Duration::from_millis(delay_ms));
+        }
+        match fs::remove_dir_all(path) {
+            Ok(()) => return Ok(()),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+            Err(e) => last_err = Some(e),
+        }
+    }
+    Err(last_err.unwrap_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::Other, "remove_dir_all retry exhausted")
+    }))
+}
+
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -140,6 +168,20 @@ impl AddonSidecars {
     pub fn kill(&self, id: &str) {
         if let Ok(mut g) = self.inner.lock() {
             if let Some(mut r) = g.remove(id) {
+                // PyInstaller's single-file bootstrapper spawns the
+                // real Python interpreter as a *child*. Killing the
+                // bootstrapper alone leaves that child running, and
+                // the child still holds the addon `.exe` + `_MEI*`
+                // tempdir open — making uninstall fail with
+                // "access denied (os error 5)" on Windows. Take down
+                // the whole process tree before reaping.
+                #[cfg(windows)]
+                {
+                    let mut tk = std::process::Command::new("taskkill");
+                    tk.args(["/T", "/F", "/PID", &r.child.id().to_string()]);
+                    no_console(&mut tk);
+                    let _ = tk.status();
+                }
                 let _ = r.child.kill();
                 let _ = r.child.wait();
             }
@@ -594,7 +636,8 @@ pub fn uninstall_blocking(id: &str) -> Result<(), String> {
     let root = addons_root()?;
     let dir = installed_dir(&root).join(id);
     if dir.exists() {
-        fs::remove_dir_all(&dir).map_err(|e| format!("rm {dir:?}: {e}"))?;
+        remove_dir_all_with_retry(&dir)
+            .map_err(|e| format!("rm {dir:?}: {e}"))?;
     }
     // PyInstaller single-file binaries extract to a temp dir
     // (`/tmp/_MEIxxxxxx` on POSIX, `%TEMP%\_MEIxxxxxx` on Windows) on
