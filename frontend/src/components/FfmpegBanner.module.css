@@ -47,7 +47,28 @@
   cursor: pointer;
 }
 
-.btn:hover { filter: brightness(1.05); }
+.btn:hover:not(:disabled) { filter: brightness(1.05); }
+.btn:disabled { opacity: 0.6; cursor: progress; }
+
+.btnSecondary {
+  background: transparent;
+  color: inherit;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.btnSecondary:hover { opacity: 1; }
+
+.error {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.85;
+}
 
 .link {
   color: inherit;

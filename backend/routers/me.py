@@ -104,7 +104,60 @@ async def ffmpeg_status():
         "installed": path is not None,
         "path": path,
         "platform": sys.platform,  # "darwin" | "win32" | "linux"
+        # The Windows banner shows an "Install for me" button that
+        # POSTs /api/system/install-ffmpeg. We don't auto-install on
+        # macOS/Linux because brew/apt commands need sudo or a
+        # pre-existing Homebrew install — too much to assume.
+        "can_auto_install": sys.platform == "win32"
+            and shutil.which("winget") is not None,
     }
+
+
+@router.post("/api/system/install-ffmpeg")
+async def install_ffmpeg():
+    """Windows-only one-click ffmpeg install via winget. Runs the
+    package install synchronously and returns once winget exits.
+    Best-effort: failures (no winget, source-agreement decline,
+    network error) surface as a 500 with stderr in the body so the
+    banner can prompt for manual download.
+
+    Unauthenticated for parity with /ffmpeg-status — the user already
+    triggered this from a click in the local-only UI, and the only
+    side-effect is installing an officially-published package.
+    """
+    import subprocess
+    if sys.platform != "win32":
+        return {"ok": False, "error": "auto-install only supported on Windows"}
+    winget = shutil.which("winget")
+    if not winget:
+        return {"ok": False, "error": "winget not found on PATH"}
+    try:
+        # `Gyan.FFmpeg` is the canonical winget id (full ffmpeg build,
+        # not the minimal `essentials` variant). --silent suppresses
+        # interactive prompts; --accept-* avoids first-run agreement
+        # blockers. CREATE_NO_WINDOW (0x08000000) keeps the install
+        # from flashing a console — we're already running headless
+        # inside the sidecar.
+        proc = subprocess.run(
+            [winget, "install", "--silent",
+             "--accept-source-agreements",
+             "--accept-package-agreements",
+             "--id", "Gyan.FFmpeg"],
+            capture_output=True, text=True, timeout=600,
+            creationflags=0x08000000,
+        )
+        if proc.returncode == 0:
+            return {"ok": True, "stdout": proc.stdout[-2000:]}
+        return {
+            "ok": False,
+            "error": f"winget exited {proc.returncode}",
+            "stdout": proc.stdout[-2000:],
+            "stderr": proc.stderr[-2000:],
+        }
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "error": "winget timed out after 10 minutes"}
+    except Exception as e:
+        return {"ok": False, "error": f"{type(e).__name__}: {e}"}
 
 
 @router.get("/api/auth/settings")

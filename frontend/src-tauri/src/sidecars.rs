@@ -82,10 +82,25 @@ fn signal_pid(pid: u32, sig: &str) {
 
 #[cfg(windows)]
 fn force_kill_pid(pid: u32) {
-    let _ = Command::new("taskkill")
-        .args(["/PID", &pid.to_string(), "/F"])
-        .status();
+    let mut cmd = Command::new("taskkill");
+    cmd.args(["/PID", &pid.to_string(), "/F"]);
+    no_console(&mut cmd);
+    let _ = cmd.status();
 }
+
+/// Suppress the console window that Windows allocates for child
+/// processes spawned from a GUI-subsystem parent. PyInstaller builds
+/// its sidecars with `console=True` (so stdout/stderr stay capturable),
+/// which means every launch flashes a black cmd window unless we pass
+/// CREATE_NO_WINDOW (0x0800_0000) at spawn time. No-op on POSIX.
+#[cfg(windows)]
+fn no_console(cmd: &mut Command) {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    cmd.creation_flags(CREATE_NO_WINDOW);
+}
+#[cfg(not(windows))]
+fn no_console(_cmd: &mut Command) {}
 
 /// Wait up to `timeout` for `port` to become free. Returns true if it did.
 fn wait_port_free(port: u16, timeout: Duration) -> bool {
@@ -331,6 +346,7 @@ pub fn spawn_backend(
                         log::warn!("no frontend dist resource found under {:?}", res_dir);
                     }
                 }
+                no_console(&mut cmd);
                 let child_opt = cmd
                     .stdout(Stdio::inherit())
                     .stderr(Stdio::inherit())
@@ -375,6 +391,7 @@ pub fn spawn_backend(
     if let Some(s) = secret_key.as_deref() {
         cmd.env("AUDIMO_SECRET_KEY", s);
     }
+    no_console(&mut cmd);
     let child_opt = cmd
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
@@ -474,6 +491,7 @@ pub fn spawn_streaming(repo_root: &PathBuf) -> Option<Child> {
                 log::info!("spawning bundled streaming: {:?}", bundled);
                 let mut cmd = Command::new(&bundled);
                 for (k, v) in mk_envs() { cmd.env(k, v); }
+                no_console(&mut cmd);
                 let child_opt = cmd
                     .stdout(Stdio::inherit())
                     .stderr(Stdio::inherit())
@@ -506,6 +524,7 @@ pub fn spawn_streaming(repo_root: &PathBuf) -> Option<Child> {
     cmd.args(["-NoProfile", "-ExecutionPolicy", "Bypass", "-File"]);
     cmd.arg(&script).current_dir(&streaming_dir);
     for (k, v) in mk_envs() { cmd.env(k, v); }
+    no_console(&mut cmd);
     let child_opt = cmd
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())

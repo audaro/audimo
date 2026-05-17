@@ -31,6 +31,19 @@ use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
+/// Suppress the console window Windows would otherwise allocate for
+/// PyInstaller-bundled addon binaries spawned from the GUI app. No-op
+/// on POSIX. See sidecars.rs for the same helper applied to the core
+/// backend / streaming sidecars.
+#[cfg(windows)]
+fn no_console(cmd: &mut Command) {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    cmd.creation_flags(CREATE_NO_WINDOW);
+}
+#[cfg(not(windows))]
+fn no_console(_cmd: &mut Command) {}
+
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -203,8 +216,8 @@ impl AddonSidecars {
         };
 
         log::info!("spawning addon {id} on port {port} bind={bind_host} ({bin:?})");
-        let child = Command::new(&bin)
-            .env("AUDIMO_ADDON_HOST", bind_host)
+        let mut cmd = Command::new(&bin);
+        cmd.env("AUDIMO_ADDON_HOST", bind_host)
             .env("AUDIMO_ADDON_PORT", port.to_string())
             .env("AUDIMO_STREAMERS_HOST", bind_host)
             .env("AUDIMO_STREAMERS_PORT", port.to_string())
@@ -212,7 +225,9 @@ impl AddonSidecars {
             .env("AUDIMO_INDEXERS_HOST", bind_host)
             .env("AUDIMO_INDEXERS_PORT", port.to_string())
             .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
+            .stderr(Stdio::inherit());
+        no_console(&mut cmd);
+        let child = cmd
             .spawn()
             .map_err(|e| format!("spawn {bin:?}: {e}"))?;
 
@@ -350,9 +365,10 @@ fn kill_pid_if_addon(pid: u32, installed_root: &Path) {
     }
     #[cfg(windows)]
     {
-        let _ = std::process::Command::new("taskkill")
-            .args(["/PID", &pid.to_string(), "/F"])
-            .status();
+        let mut cmd = std::process::Command::new("taskkill");
+        cmd.args(["/PID", &pid.to_string(), "/F"]);
+        no_console(&mut cmd);
+        let _ = cmd.status();
     }
 }
 
