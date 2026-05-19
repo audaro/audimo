@@ -44,43 +44,86 @@ fn no_console(cmd: &mut Command) {
 #[cfg(not(windows))]
 fn no_console(_cmd: &mut Command) {}
 
-/// Rename a file with the same retry-with-backoff strategy as
-/// `remove_dir_all_with_retry`. On Windows, MoveFileEx fails with
-/// ERROR_ACCESS_DENIED whenever Defender's real-time scanner is
-/// holding the source file open (which it does for every freshly-
-/// written .exe). The retry window lets the scan finish and the
-/// handle drop. Also pre-removes the destination since MoveFile
-/// doesn't overwrite by default on Windows.
+/// Retry backoff for Windows filesystem ops that race AV scanners.
+/// Cumulative ~30s — the previous 3.85s window wasn't enough on
+/// machines with on-access scanning + cloud lookups, where Defender
+/// can hold a freshly-killed process's .exe for 5-15s before
+/// releasing FILE_SHARE_DELETE. 30s adds noticeable latency only on
+/// terminal-failure cases (file genuinely locked by something we
+/// can't kill); successful retries usually win in <1s.
+const FS_RETRY_BACKOFF_MS: &[u64] = &[0, 100, 250, 500, 1000, 2000, 4000, 6000, 8000, 8000];
+
+/// Rename a file with retry-backoff for the Windows Defender race.
+/// On Windows, MoveFileEx fails with ERROR_ACCESS_DENIED whenever
+/// Defender's real-time scanner is holding either source or
+/// destination open (it scans freshly-killed-process binaries and
+/// freshly-written .exes alike).
+///
+/// Logs each attempt so production logs show which retry won — or
+/// which step failed if the loop is exhausted. Bubbles the
+/// pre-remove failure into the final error message so a stuck
+/// destination is distinguishable from a stuck source.
 fn rename_with_retry(from: &Path, to: &Path) -> std::io::Result<()> {
-    // On Windows, MoveFileEx without MOVEFILE_REPLACE_EXISTING errors
-    // if `to` exists. Pre-remove (with its own retry) so a reinstall
-    // over an existing file doesn't trip over that.
-    if to.exists() {
-        let _ = remove_file_with_retry(to);
-    }
+    // On Windows, fs::rename uses MoveFileExW with MOVEFILE_REPLACE_-
+    // EXISTING, which CAN overwrite — but only if the destination
+    // has FILE_SHARE_DELETE access. If Defender is scanning the
+    // existing target, that's denied. Pre-remove gives us a clearer
+    // error path and avoids surfacing MoveFile-specific quirks.
+    let pre_remove_err = if to.exists() {
+        match remove_file_with_retry(to) {
+            Ok(()) => None,
+            Err(e) => {
+                log::warn!("rename pre-remove of {to:?} failed: {e}");
+                Some(e)
+            }
+        }
+    } else {
+        None
+    };
     let mut last_err: Option<std::io::Error> = None;
-    for delay_ms in [0u64, 100, 250, 500, 1000, 2000] {
-        if delay_ms > 0 {
-            std::thread::sleep(Duration::from_millis(delay_ms));
+    for (attempt, delay_ms) in FS_RETRY_BACKOFF_MS.iter().enumerate() {
+        if *delay_ms > 0 {
+            std::thread::sleep(Duration::from_millis(*delay_ms));
         }
         match fs::rename(from, to) {
-            Ok(()) => return Ok(()),
+            Ok(()) => {
+                if attempt > 0 {
+                    log::info!("rename {to:?} succeeded on attempt {} (after Defender release)", attempt + 1);
+                }
+                return Ok(());
+            }
             Err(e) => last_err = Some(e),
         }
     }
-    Err(last_err.unwrap_or_else(|| {
+    // Surface both the final rename failure AND the pre-remove
+    // failure if there was one — they're often the same root cause
+    // (destination locked) but the user only sees the rename error.
+    let final_err = last_err.unwrap_or_else(|| {
         std::io::Error::new(std::io::ErrorKind::Other, "rename retry exhausted")
-    }))
+    });
+    if let Some(pre) = pre_remove_err {
+        Err(std::io::Error::new(
+            final_err.kind(),
+            format!("{final_err} (pre-remove of destination also failed: {pre})"),
+        ))
+    } else {
+        Err(final_err)
+    }
 }
 
 fn remove_file_with_retry(path: &Path) -> std::io::Result<()> {
     let mut last_err: Option<std::io::Error> = None;
-    for delay_ms in [0u64, 100, 250, 500, 1000] {
-        if delay_ms > 0 {
-            std::thread::sleep(Duration::from_millis(delay_ms));
+    for (attempt, delay_ms) in FS_RETRY_BACKOFF_MS.iter().enumerate() {
+        if *delay_ms > 0 {
+            std::thread::sleep(Duration::from_millis(*delay_ms));
         }
         match fs::remove_file(path) {
-            Ok(()) => return Ok(()),
+            Ok(()) => {
+                if attempt > 0 {
+                    log::info!("remove_file {path:?} succeeded on attempt {}", attempt + 1);
+                }
+                return Ok(());
+            }
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
             Err(e) => last_err = Some(e),
         }
@@ -103,12 +146,17 @@ fn remove_file_with_retry(path: &Path) -> std::io::Result<()> {
 /// real-time scanners.
 fn spawn_with_retry(cmd: &mut Command) -> std::io::Result<Child> {
     let mut last_err: Option<std::io::Error> = None;
-    for delay_ms in [0u64, 100, 250, 500, 1000, 2000] {
-        if delay_ms > 0 {
-            std::thread::sleep(Duration::from_millis(delay_ms));
+    for (attempt, delay_ms) in FS_RETRY_BACKOFF_MS.iter().enumerate() {
+        if *delay_ms > 0 {
+            std::thread::sleep(Duration::from_millis(*delay_ms));
         }
         match cmd.spawn() {
-            Ok(child) => return Ok(child),
+            Ok(child) => {
+                if attempt > 0 {
+                    log::info!("spawn succeeded on attempt {} (after AV scan release)", attempt + 1);
+                }
+                return Ok(child);
+            }
             // Only retry on the transient AV/lock case. Other errors
             // (missing file, bad format, OOM) won't fix themselves.
             Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => last_err = Some(e),
@@ -124,15 +172,21 @@ fn spawn_with_retry(cmd: &mut Command) -> std::io::Result<Child> {
 /// `<id>.exe`. Used before reinstalling an addon to release the file
 /// lock the running sidecar holds on its own binary. No-op on POSIX —
 /// the install path there is overwrite-safe.
+///
+/// Post-kill sleep is 1000ms (was 200ms): Defender frequently kicks
+/// off a post-process scan of the just-killed image's .exe, holding
+/// FILE_SHARE_READ-only for hundreds of ms. The longer pause makes
+/// the immediately-following rename more likely to win on the first
+/// attempt, instead of leaning on the rename retry budget.
 #[cfg(windows)]
 fn kill_addon_processes_by_name(id: &str) {
     let image = format!("{id}.exe");
     let mut cmd = std::process::Command::new("taskkill");
     cmd.args(["/F", "/T", "/IM", &image]);
     no_console(&mut cmd);
-    let _ = cmd.status();
-    // Brief pause for kernel to release handles after kill.
-    std::thread::sleep(Duration::from_millis(200));
+    let status = cmd.status();
+    log::info!("taskkill /F /T /IM {image} -> {status:?}");
+    std::thread::sleep(Duration::from_millis(1000));
 }
 #[cfg(not(windows))]
 fn kill_addon_processes_by_name(_id: &str) {}
@@ -150,12 +204,17 @@ fn kill_addon_processes_by_name(_id: &str) {}
 /// symmetry but the first attempt always succeeds.
 fn remove_dir_all_with_retry(path: &Path) -> std::io::Result<()> {
     let mut last_err: Option<std::io::Error> = None;
-    for delay_ms in [0u64, 100, 250, 500, 1000, 2000] {
-        if delay_ms > 0 {
-            std::thread::sleep(Duration::from_millis(delay_ms));
+    for (attempt, delay_ms) in FS_RETRY_BACKOFF_MS.iter().enumerate() {
+        if *delay_ms > 0 {
+            std::thread::sleep(Duration::from_millis(*delay_ms));
         }
         match fs::remove_dir_all(path) {
-            Ok(()) => return Ok(()),
+            Ok(()) => {
+                if attempt > 0 {
+                    log::info!("remove_dir_all {path:?} succeeded on attempt {}", attempt + 1);
+                }
+                return Ok(());
+            }
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
             Err(e) => last_err = Some(e),
         }
@@ -718,8 +777,15 @@ pub fn install_blocking(
     // ERROR_ACCESS_DENIED (5). rename_with_retry loops with backoff
     // until the scanner releases its handle (~100-500ms in practice,
     // longer on aggressive third-party AV).
-    rename_with_retry(&staging, &target)
-        .map_err(|e| format!("rename {target:?}: {e}"))?;
+    if let Err(e) = rename_with_retry(&staging, &target) {
+        // Log explicitly — the error string gets bubbled up as a Tauri
+        // command failure and surfaces in the UI, but without an
+        // explicit log line the log file ends mid-install and future
+        // diagnosis has to read both UI and disk to reconstruct.
+        log::error!("rename {target:?} failed after retry: {e}");
+        return Err(format!("rename {target:?}: {e}"));
+    }
+    log::info!("rename {target:?} -> ok");
 
     #[cfg(unix)]
     {
