@@ -44,6 +44,69 @@ fn no_console(cmd: &mut Command) {
 #[cfg(not(windows))]
 fn no_console(_cmd: &mut Command) {}
 
+/// Rename a file with the same retry-with-backoff strategy as
+/// `remove_dir_all_with_retry`. On Windows, MoveFileEx fails with
+/// ERROR_ACCESS_DENIED whenever Defender's real-time scanner is
+/// holding the source file open (which it does for every freshly-
+/// written .exe). The retry window lets the scan finish and the
+/// handle drop. Also pre-removes the destination since MoveFile
+/// doesn't overwrite by default on Windows.
+fn rename_with_retry(from: &Path, to: &Path) -> std::io::Result<()> {
+    // On Windows, MoveFileEx without MOVEFILE_REPLACE_EXISTING errors
+    // if `to` exists. Pre-remove (with its own retry) so a reinstall
+    // over an existing file doesn't trip over that.
+    if to.exists() {
+        let _ = remove_file_with_retry(to);
+    }
+    let mut last_err: Option<std::io::Error> = None;
+    for delay_ms in [0u64, 100, 250, 500, 1000, 2000] {
+        if delay_ms > 0 {
+            std::thread::sleep(Duration::from_millis(delay_ms));
+        }
+        match fs::rename(from, to) {
+            Ok(()) => return Ok(()),
+            Err(e) => last_err = Some(e),
+        }
+    }
+    Err(last_err.unwrap_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::Other, "rename retry exhausted")
+    }))
+}
+
+fn remove_file_with_retry(path: &Path) -> std::io::Result<()> {
+    let mut last_err: Option<std::io::Error> = None;
+    for delay_ms in [0u64, 100, 250, 500, 1000] {
+        if delay_ms > 0 {
+            std::thread::sleep(Duration::from_millis(delay_ms));
+        }
+        match fs::remove_file(path) {
+            Ok(()) => return Ok(()),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+            Err(e) => last_err = Some(e),
+        }
+    }
+    Err(last_err.unwrap_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::Other, "remove_file retry exhausted")
+    }))
+}
+
+/// Best-effort taskkill of any running process whose image name matches
+/// `<id>.exe`. Used before reinstalling an addon to release the file
+/// lock the running sidecar holds on its own binary. No-op on POSIX —
+/// the install path there is overwrite-safe.
+#[cfg(windows)]
+fn kill_addon_processes_by_name(id: &str) {
+    let image = format!("{id}.exe");
+    let mut cmd = std::process::Command::new("taskkill");
+    cmd.args(["/F", "/T", "/IM", &image]);
+    no_console(&mut cmd);
+    let _ = cmd.status();
+    // Brief pause for kernel to release handles after kill.
+    std::thread::sleep(Duration::from_millis(200));
+}
+#[cfg(not(windows))]
+fn kill_addon_processes_by_name(_id: &str) {}
+
 /// Remove a directory tree, retrying on Windows when the OS hasn't
 /// yet released file handles from a freshly-killed process.
 ///
@@ -551,6 +614,17 @@ pub fn install_blocking(
     let target = bin_path(&dir, &manifest.id);
     let staging = target.with_extension("partial");
 
+    // Reinstall safety: a previous instance of this addon may still be
+    // running and holding `target` open. On Windows that's a hard lock
+    // and the upcoming rename would fail with ERROR_ACCESS_DENIED (5).
+    // Kill anything claiming the image name before we touch the file
+    // system. No-op on POSIX (overwrite-safe there).
+    kill_addon_processes_by_name(&manifest.id);
+    // If a previous install left a stale `.partial` behind, get rid of
+    // it before re-opening so File::create doesn't fight an AV scan
+    // handle on the old contents.
+    let _ = remove_file_with_retry(&staging);
+
     log::info!("downloading addon binary {} for {plat}", entry.url);
     let mut bin_resp = client
         .get(&entry.url)
@@ -608,7 +682,15 @@ pub fn install_blocking(
 
     on_progress(&manifest.id, 93, "Installing…");
 
-    fs::rename(&staging, &target).map_err(|e| format!("rename {target:?}: {e}"))?;
+    // The verify step above just SHA-read the staging file, which
+    // tickles Windows Defender into an exclusive real-time scan.
+    // That scan holds the source file open with FILE_SHARE_READ but
+    // NOT FILE_SHARE_DELETE, so a naive rename here fails with
+    // ERROR_ACCESS_DENIED (5). rename_with_retry loops with backoff
+    // until the scanner releases its handle (~100-500ms in practice,
+    // longer on aggressive third-party AV).
+    rename_with_retry(&staging, &target)
+        .map_err(|e| format!("rename {target:?}: {e}"))?;
 
     #[cfg(unix)]
     {
