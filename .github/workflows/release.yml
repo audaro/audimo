@@ -232,6 +232,24 @@ jobs:
       # No Homebrew on Windows — libtorrent installs straight from
       # PyPI as a wheel. PyInstaller's collect_all('libtorrent') in
       # audimo_streaming.spec then bundles the .pyd + DLLs.
+      #
+      # OpenSSL 1.1 caveat: the libtorrent Windows wheel links
+      # libcrypto-1_1-x64.dll / libssl-1_1-x64.dll dynamically but
+      # doesn't bundle them. Install OpenSSL 1.1 from slproweb's
+      # community installer so the spec can copy the two DLLs into
+      # the PyInstaller bundle. Without this, audimo-streaming.exe
+      # crashes on first import on any machine that doesn't already
+      # have OpenSSL 1.1 on PATH (including Windows-on-ARM under x64
+      # emulation, where these DLLs are never pre-installed).
+      - name: Install OpenSSL 1.1 (libtorrent runtime dep)
+        shell: pwsh
+        run: |
+          $url = 'https://slproweb.com/download/Win64OpenSSL_Light-1_1_1w.exe'
+          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\openssl-1.1.exe"
+          Start-Process "$env:RUNNER_TEMP\openssl-1.1.exe" -ArgumentList '/silent','/sp-','/suppressmsgboxes','/DIR=C:\OpenSSL-Win64' -Wait
+          "OPENSSL_DLL_DIR=C:\OpenSSL-Win64\bin" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Get-ChildItem C:\OpenSSL-Win64\bin -Filter 'lib*1_1*.dll' | Select-Object FullName, Length
+
       - name: Build streaming sidecar (PyInstaller + libtorrent)
         working-directory: streaming_server
         shell: pwsh
@@ -241,6 +259,29 @@ jobs:
           .\.venv\Scripts\python.exe -m pip install -r requirements.txt pyinstaller libtorrent
           .\.venv\Scripts\pyinstaller.exe audimo_streaming.spec --clean --noconfirm
           Get-ChildItem dist
+          # Smoke test: the freshly-built exe must be able to import
+          # libtorrent and bind its port. If the OpenSSL DLLs weren't
+          # bundled correctly we catch it here, not in users' hands.
+          $exe = (Resolve-Path 'dist\audimo-streaming.exe').Path
+          $out = "$env:RUNNER_TEMP\smoke.out"
+          $err = "$env:RUNNER_TEMP\smoke.err"
+          $proc = Start-Process -FilePath $exe -PassThru -NoNewWindow `
+                                 -RedirectStandardOutput $out `
+                                 -RedirectStandardError $err
+          Start-Sleep -Seconds 8
+          if (-not $proc.HasExited) { $proc | Stop-Process -Force }
+          $log = ((Get-Content $out -Raw -ErrorAction SilentlyContinue) +
+                  "`n" +
+                  (Get-Content $err -Raw -ErrorAction SilentlyContinue))
+          Write-Host "smoke output:`n$log"
+          if ($log -match 'DLL load failed') {
+            Write-Error 'audimo-streaming.exe failed to import libtorrent — OpenSSL DLLs missing from bundle'
+            exit 1
+          }
+          if (-not ($log -match 'Uvicorn running on http://127.0.0.1:11471')) {
+            Write-Error 'audimo-streaming.exe did not start uvicorn within 8s'
+            exit 1
+          }
 
       # ── Stage sidecars where Tauri expects them ─────────────────
       # Tauri's externalBin resolver appends the target triple + .exe,

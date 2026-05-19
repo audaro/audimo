@@ -22,6 +22,27 @@ block_cipher = None
 
 lt_datas, lt_binaries, lt_hiddenimports = collect_all('libtorrent')
 
+# OpenSSL 1.1 DLLs — libtorrent's Windows wheel links against
+# libcrypto-1_1-x64.dll and libssl-1_1-x64.dll dynamically but doesn't
+# bundle them. collect_all('libtorrent') only picks up files inside the
+# libtorrent package dir, so we have to locate OpenSSL ourselves and add
+# the DLLs to `binaries` explicitly. Without this the bundled exe
+# crashes on first import with "DLL load failed while importing
+# libtorrent" on any machine that doesn't already have OpenSSL 1.1 on
+# PATH — including Windows-on-ARM running x64 under emulation.
+import os as _os
+openssl_binaries = []
+if _os.name == 'nt':
+    _dll_dir = _os.environ.get('OPENSSL_DLL_DIR') or r'C:\Program Files\OpenSSL-Win64\bin'
+    for _dll in ('libcrypto-1_1-x64.dll', 'libssl-1_1-x64.dll'):
+        _p = _os.path.join(_dll_dir, _dll)
+        if _os.path.isfile(_p):
+            openssl_binaries.append((_p, '.'))
+        else:
+            print(f"[spec] WARNING: missing OpenSSL dep {_p}; "
+                  f"bundled audimo-streaming.exe will fail to import "
+                  f"libtorrent on machines without OpenSSL 1.1 installed")
+
 # Pre-warmed libtorrent session state. Snapshot from a healthy
 # audimo-streaming process; bundling it cuts first-launch DHT
 # bootstrap from 30-90s (cold) to a few seconds (warm). Optional —
@@ -60,7 +81,7 @@ if _os.path.isfile('seed_session.dat'):
 a = Analysis(
     ['run.py'],
     pathex=['.'],
-    binaries=lt_binaries,
+    binaries=lt_binaries + openssl_binaries,
     datas=lt_datas + seed_datas,
     hiddenimports=[
         *lt_hiddenimports,
