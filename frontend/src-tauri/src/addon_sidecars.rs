@@ -90,6 +90,36 @@ fn remove_file_with_retry(path: &Path) -> std::io::Result<()> {
     }))
 }
 
+/// Spawn a command, retrying on Windows when the OS rejects the
+/// exec with ERROR_ACCESS_DENIED (os error 5). The rename step in
+/// `install_blocking` succeeds the moment Defender releases the
+/// .partial source handle, but Defender then frequently *re-scans*
+/// the file at its renamed path before letting the kernel exec it.
+/// That second scan window (typically 100–500ms, longer on third-
+/// party AV) makes the immediately-following spawn fail with the
+/// same os error 5 that the rename fix already paved over.
+///
+/// POSIX is unaffected — process creation there doesn't race with
+/// real-time scanners.
+fn spawn_with_retry(cmd: &mut Command) -> std::io::Result<Child> {
+    let mut last_err: Option<std::io::Error> = None;
+    for delay_ms in [0u64, 100, 250, 500, 1000, 2000] {
+        if delay_ms > 0 {
+            std::thread::sleep(Duration::from_millis(delay_ms));
+        }
+        match cmd.spawn() {
+            Ok(child) => return Ok(child),
+            // Only retry on the transient AV/lock case. Other errors
+            // (missing file, bad format, OOM) won't fix themselves.
+            Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => last_err = Some(e),
+            Err(e) => return Err(e),
+        }
+    }
+    Err(last_err.unwrap_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::Other, "spawn retry exhausted")
+    }))
+}
+
 /// Best-effort taskkill of any running process whose image name matches
 /// `<id>.exe`. Used before reinstalling an addon to release the file
 /// lock the running sidecar holds on its own binary. No-op on POSIX —
@@ -332,8 +362,7 @@ impl AddonSidecars {
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit());
         no_console(&mut cmd);
-        let child = cmd
-            .spawn()
+        let child = spawn_with_retry(&mut cmd)
             .map_err(|e| format!("spawn {bin:?}: {e}"))?;
 
         // Persist port + PID for next boot so we can kill orphans.
