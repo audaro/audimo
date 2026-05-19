@@ -533,7 +533,47 @@ pub fn kill_strays_under(installed_root: &Path) {
             std::thread::sleep(Duration::from_millis(300));
         }
     }
-    #[cfg(not(unix))]
+    #[cfg(windows)]
+    {
+        // Find every running process whose ExecutablePath lives under
+        // the addons install root and taskkill its tree. Windows has
+        // no pgrep equivalent, but Win32_Process.ExecutablePath gives
+        // us the same answer more precisely — we match by the real
+        // exe path rather than the command line, so we can't shoot
+        // ourselves (the Tauri process's exe is in Program Files,
+        // not AppData\Roaming\audimo\addons\installed).
+        let root = installed_root.to_string_lossy().to_string();
+        if root.is_empty() { return; }
+        let prefix = root.trim_end_matches('\\').replace('\'', "''");
+        let script = format!(
+            "Get-CimInstance Win32_Process | Where-Object {{ $_.ExecutablePath -and $_.ExecutablePath.StartsWith('{prefix}', [System.StringComparison]::OrdinalIgnoreCase) }} | Select-Object -ExpandProperty ProcessId"
+        );
+        let mut ps = std::process::Command::new("powershell");
+        ps.args(["-NoProfile", "-NonInteractive", "-Command", &script]);
+        no_console(&mut ps);
+        let Ok(out) = ps.output() else { return };
+        if !out.status.success() { return }
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        let our_pid = std::process::id();
+        let mut killed = 0;
+        for line in stdout.lines() {
+            let Ok(pid) = line.trim().parse::<u32>() else { continue };
+            if pid == our_pid || pid == 0 { continue }
+            let mut tk = std::process::Command::new("taskkill");
+            tk.args(["/T", "/F", "/PID", &pid.to_string()]);
+            no_console(&mut tk);
+            if tk.status().map(|s| s.success()).unwrap_or(false) {
+                killed += 1;
+            }
+        }
+        if killed > 0 {
+            log::info!("addon stray-sweep: killed {killed} orphaned sidecar(s)");
+            // Give Windows a beat to release ports + file handles
+            // before respawn tries to reclaim them.
+            std::thread::sleep(Duration::from_millis(500));
+        }
+    }
+    #[cfg(not(any(unix, windows)))]
     {
         let _ = installed_root;
     }
